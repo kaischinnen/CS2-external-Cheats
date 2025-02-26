@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "Bhop/1.0.0": {
+        "dependencies": {
+          "swed64": "1.0.5"
+        },
+        "runtime": {
+          "Bhop.dll": {}
+        }
+      },
+      "swed64/1.0.5": {
+        "runtime": {
+          "lib/net6.0/swed64.dll": {
+            "assemblyVersion": "1.0.5.0",
+            "fileVersion": "1.0.5.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Bhop/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "swed64/1.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hjPJApGh5ppws192I2mw5/XKY6lD1fbA5k9WuxUT2OwCMSmMrtRZ+fAYPQF2R3DBXlgjnrRMKqcurkFFynG+cg==",
+      "path": "swed64/1.0.5",
+      "hashPath": "swed64.1.0.5.nupkg.sha512"
+    }
+  }
+}
