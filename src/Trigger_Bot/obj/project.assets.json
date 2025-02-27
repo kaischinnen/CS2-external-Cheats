@@ -40,11 +40,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Trigger_Bot\\Trigger_Bot.csproj",
+      "projectUniqueName": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Trigger_Bot\\Trigger_Bot.csproj",
       "projectName": "Trigger_Bot",
-      "projectPath": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Trigger_Bot\\Trigger_Bot.csproj",
+      "projectPath": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Trigger_Bot\\Trigger_Bot.csproj",
       "packagesPath": "C:\\Users\\kaisc\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Trigger_Bot\\obj\\",
+      "outputPath": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Trigger_Bot\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\kaisc\\AppData\\Roaming\\NuGet\\NuGet.Config"
