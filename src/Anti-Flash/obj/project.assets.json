@@ -40,11 +40,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Anti-Flash\\Anti-Flash.csproj",
+      "projectUniqueName": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Anti-Flash\\Anti-Flash.csproj",
       "projectName": "Anti-Flash",
-      "projectPath": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Anti-Flash\\Anti-Flash.csproj",
+      "projectPath": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Anti-Flash\\Anti-Flash.csproj",
       "packagesPath": "C:\\Users\\kaisc\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Anti-Flash\\obj\\",
+      "outputPath": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Anti-Flash\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\kaisc\\AppData\\Roaming\\NuGet\\NuGet.Config"

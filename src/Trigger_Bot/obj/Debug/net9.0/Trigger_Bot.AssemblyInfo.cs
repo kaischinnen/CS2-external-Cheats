@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Trigger_Bot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+86d597d90cb10d7597f66c89cca7169eb3433470")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0aac6b193420b934462e1706d35f3f57f4e87ad9")]
 [assembly: System.Reflection.AssemblyProductAttribute("Trigger_Bot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Trigger_Bot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

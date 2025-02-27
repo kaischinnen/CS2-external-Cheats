@@ -40,11 +40,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Bhop\\Bhop.csproj",
+      "projectUniqueName": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Bhop\\Bhop.csproj",
       "projectName": "Bhop",
-      "projectPath": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Bhop\\Bhop.csproj",
+      "projectPath": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Bhop\\Bhop.csproj",
       "packagesPath": "C:\\Users\\kaisc\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\kaisc\\Downloads\\v2_external_cheats\\Bhop\\obj\\",
+      "outputPath": "C:\\Users\\kaisc\\Downloads\\Git\\CS2-external-Cheats\\src\\Bhop\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\kaisc\\AppData\\Roaming\\NuGet\\NuGet.Config"
