@@ -19,4 +19,5 @@ public static class Offsets {
     public static int m_lifeState = 0x348;
     public static int m_modelState = 0x170; 
     public static int m_pGameSceneNode = 0x328; 
+    public static int m_iszPlayerName = 0x660;
 }
