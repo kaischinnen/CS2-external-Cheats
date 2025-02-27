@@ -69,6 +69,7 @@ while (true) {
         int health = swed.ReadInt(currentPawn + Offsets.m_iHealth);
         int team = swed.ReadInt(currentPawn + Offsets.m_iTeamNum);
         uint lifestate = swed.ReadUInt(currentPawn + Offsets.m_lifeState);
+        string name = swed.ReadString(currentController + Offsets.m_iszPlayerName, 32);
 
         // if aatributes hold up, we add the entity to our own list
         if (lifestate != 256) continue;
@@ -96,7 +97,7 @@ while (true) {
             Console.ForegroundColor = ConsoleColor.Red;
         }
 
-        Console.WriteLine($"{entity.health}hp, distance: {(int)entity.distance / 100}m, head coordinate: {entity.head}");
+        Console.WriteLine($"{name}: {entity.health}hp, distance: {(int)entity.distance / 100}m, head coordinate: {entity.head}");
         
         Console.ResetColor();
     }
