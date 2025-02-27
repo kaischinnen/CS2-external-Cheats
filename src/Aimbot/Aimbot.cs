@@ -55,9 +55,15 @@ while (true) {
 
         // second entry, and now we get the specific pawn
         IntPtr listEntry2 = swed.ReadPointer(entityList, 0x8 * ((pawnHandle & 0xFFF) >> 9) + 0x10);
-        IntPtr currentPawn = swed.ReadPointer(listEntry2, 0x78 * (pawnHandle & 0x1FF));
+        IntPtr currentPawn = swed.ReadPointer(listEntry2, 0x78 * (pawnHandle & 0x1FF)); // bitmask: extracts index within the entry
 
         if (currentPawn == localPlayer.pawnAddress) continue; // if the entity is us
+
+        // get scene node
+        IntPtr sceneNode = swed.ReadPointer(currentPawn + Offsets.m_pGameSceneNode);
+
+        // get bone array / bone matrix
+        IntPtr boneMatrix = swed.ReadPointer(sceneNode + Offsets.m_modelState + 0x80); // 0x80 is dwBoneMatrix offset
 
         // get pawn attributes
         int health = swed.ReadInt(currentPawn + Offsets.m_iHealth);
@@ -75,9 +81,10 @@ while (true) {
         entity.controllerAddress = currentController;
         entity.health = health;
         entity.lifestate = lifestate;
-        entity.origin = swed.ReadVec(currentPawn + Offsets.m_vOldOrigin);
+        entity.origin = swed.ReadVec(currentPawn + Offsets.m_vOldOrigin); 
         entity.view = swed.ReadVec(currentPawn + Offsets.m_vecViewOffset);
         entity.distance = Vector3.Distance(localPlayer.origin, entity.origin);
+        entity.head = swed.ReadVec(boneMatrix, 6 * 32); // 6 = bone id for head, 32 = size of matrix = current step
 
         // addign entity to our own entity
         entities.Add(entity);
@@ -89,7 +96,7 @@ while (true) {
             Console.ForegroundColor = ConsoleColor.Red;
         }
 
-        Console.WriteLine($"{entity.health}hp, distance: {(int)entity.distance / 100}m");
+        Console.WriteLine($"{entity.health}hp, distance: {(int)entity.distance / 100}m, head coordinate: {entity.head}");
         
         Console.ResetColor();
     }
@@ -100,11 +107,11 @@ while (true) {
     if (entities.Count > 0 && GetAsyncKeyState(HOTKEY) < 0 && renderer.aimbot) {    // count, hotkey, checkbox,
 
         // get view pos
-        Vector3 playerView = Vector3.Add(localPlayer.origin, localPlayer.view);
+        Vector3 playerView = Vector3.Add(localPlayer.origin, localPlayer.view); // origin is feet, view eye level
         Vector3 entityView = Vector3.Add(entities[0].origin, entities[0].view);
 
         // get angles
-        Vector2 newAngles = Calculate.CalculateAngles(playerView, entityView);
+        Vector2 newAngles = Calculate.CalculateAngles(playerView, entities[0].head);
         Vector3 newAnglesVec3 = new Vector3(newAngles.Y, newAngles.X, 0.0f); // set y before x
 
         // force new angles
