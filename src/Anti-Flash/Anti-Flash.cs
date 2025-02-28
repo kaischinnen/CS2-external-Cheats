@@ -6,7 +6,7 @@ class AntiFlash {
         IntPtr client = swed.GetModuleBase("client.dll");
 
         // offsets
-        int dwLocalPlayerPawn = 0x1889F20;
+        int dwLocalPlayerPawn = 0x188AF10;
         int m_flFlashBangTime = 0x13F8;
 
         while (true) {

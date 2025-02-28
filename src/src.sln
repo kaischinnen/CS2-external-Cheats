@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anti-Flash", "Anti-Flash\An
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trigger_Bot", "Trigger_Bot\Trigger_Bot.csproj", "{E2DAA564-E0C8-4C7F-B842-A1D03D0F86B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aimbot", "Aimbot\Aimbot.csproj", "{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{E2DAA564-E0C8-4C7F-B842-A1D03D0F86B8}.Release|x64.Build.0 = Release|Any CPU
 		{E2DAA564-E0C8-4C7F-B842-A1D03D0F86B8}.Release|x86.ActiveCfg = Release|Any CPU
 		{E2DAA564-E0C8-4C7F-B842-A1D03D0F86B8}.Release|x86.Build.0 = Release|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Debug|x64.Build.0 = Debug|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Debug|x86.Build.0 = Debug|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Release|x64.ActiveCfg = Release|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Release|x64.Build.0 = Release|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Release|x86.ActiveCfg = Release|Any CPU
+		{8B4ADB78-023F-D4B0-7C6B-3BC0A298C31C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

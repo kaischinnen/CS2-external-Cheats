@@ -20,11 +20,11 @@ class Bhop
         const uint MINUS_JUMP = 256;
 
         IntPtr client = swed.GetModuleBase("client.dll");
-        IntPtr jumpAddress = client + 0x1882C30;
+        IntPtr jumpAddress = client + 0x1883C20;
 
         while (true)
         {
-            IntPtr playerPawnAddress = swed.ReadPointer(client, 0x1889F20);
+            IntPtr playerPawnAddress = swed.ReadPointer(client, 0x188AF10);
             uint fFlag = swed.ReadUInt(playerPawnAddress, 0x3EC);
 
             if (GetAsyncKeyState(SPACE_BAR) < 0)
