@@ -5,17 +5,13 @@ class AntiFlash {
 
         IntPtr client = swed.GetModuleBase("client.dll");
 
-        // offsets
-        int dwLocalPlayerPawn = 0x188AF10;
-        int m_flFlashBangTime = 0x13F8;
-
         while (true) {
-            IntPtr localPlayerPawn = swed.ReadPointer(client, dwLocalPlayerPawn);
+            IntPtr localPlayerPawn = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
 
-            float flashDuration = swed.ReadFloat(localPlayerPawn, m_flFlashBangTime); 
+            float flashDuration = swed.ReadFloat(localPlayerPawn, Offsets.m_flFlashBangTime); 
 
             if (flashDuration > 0) {
-                swed.WriteFloat(localPlayerPawn, m_flFlashBangTime, 0);
+                swed.WriteFloat(localPlayerPawn, Offsets.m_flFlashBangTime, 0);
                 Console.WriteLine("Avoided Flash!"); 
             }
             Thread.Sleep(2);

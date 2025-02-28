@@ -12,22 +12,13 @@ namespace TriggerBot
         public int team { get; set; }
         public uint m_lifeState { get; set; }
     }
-    public class Offsets {
-        public static int dwLocalPlayerPawn = 0x188AF10;
-        public static int dwEntityList = 0x1A369E0;
-        public static int m_iTeamNum = 0x3E3;
-        public static int m_lifeState = 0x348;
-        public static int m_iIDEntIndex = 0x1458;
-        public static int m_iHealth = 0x344;
-        public static int attackOffset = 0x1883710;
-    }
 
     class Program
     {
         const int HOTKEY = 0x06; // Mouse 4
         static Swed swed = new Swed("cs2");
         static IntPtr client = swed.GetModuleBase("client.dll");
-        static IntPtr attack = client + Offsets.attackOffset;
+        static IntPtr attack = client + Offsets.attack;
         static void Main()
         {
             Entity localPlayer = new Entity();

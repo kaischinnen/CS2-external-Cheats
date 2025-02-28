@@ -1,9 +1,4 @@
-using System; 
-using System.Collections.Generic; 
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 public static class Calculate {
     public static Vector2 CalculateAngles(Vector3 from, Vector3 to) {

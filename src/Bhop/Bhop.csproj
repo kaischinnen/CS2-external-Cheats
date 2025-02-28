@@ -11,4 +11,6 @@
     <PackageReference Include="swed64" Version="1.0.5" />
   </ItemGroup>
 
+  <Import Project="..\Offsets\Offsets.projitems" Label="Shared" />
+
 </Project>

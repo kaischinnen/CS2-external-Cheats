@@ -7,16 +7,10 @@ Swed swed = new Swed("cs2");
 // get client.dll base address
 IntPtr client = swed.GetModuleBase("client.dll");
 
-// offsets
-int dwEntityList = 0x1A369E0;
-int m_hPlayerPawn = 0x80C;
-int m_bSpotted = 0x8;
-int m_entitySpottedState = 0x23D0;
-
 while (true)
 {
     // get entity list
-    IntPtr entityList = swed.ReadPointer(client + dwEntityList);
+    IntPtr entityList = swed.ReadPointer(client + Offsets.dwEntityList);
 
     // first entry
     IntPtr listEntry = swed.ReadPointer(entityList, 0x10);
@@ -31,7 +25,7 @@ while (true)
         if (currentController == IntPtr.Zero) continue;
 
         // get pawn
-        int pawnHandle = swed.ReadInt(currentController + m_hPlayerPawn);
+        int pawnHandle = swed.ReadInt(currentController + Offsets.m_hPlayerPawn);
         if (pawnHandle == 0) continue;
 
         // second entry, and now we get the specific pawn
@@ -39,7 +33,7 @@ while (true)
         IntPtr currentPawn = swed.ReadPointer(listEntry2, 0x78 * (pawnHandle & 0x1FF)); // bitmask: extracts index within the entry
 
         // write over spotted status
-        swed.WriteBool(currentPawn + m_entitySpottedState + m_bSpotted, true);
+        swed.WriteBool(currentPawn + Offsets.m_entitySpottedState + Offsets.m_bSpotted, true);
 
         Thread.Sleep(50);
         Console.Clear();

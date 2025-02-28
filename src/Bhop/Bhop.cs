@@ -20,7 +20,7 @@ class Bhop
         const uint MINUS_JUMP = 256;
 
         IntPtr client = swed.GetModuleBase("client.dll");
-        IntPtr jumpAddress = client + 0x1883C20;
+        IntPtr jumpAddress = client + Offsets.jump;
 
         while (true)
         {
