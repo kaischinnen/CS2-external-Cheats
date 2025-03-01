@@ -6,6 +6,7 @@ public static class Offsets
     public static int dwViewAngles = 0x1AACA60;
     public static int dwLocalPlayerPawn = 0x188AF10;
     public static int dwEntityList = 0x1A369E0;
+    public static int dwViewMatrix = 0x1AA27D0;
 
     // client.dll.cs
     public static int m_hPlayerPawn = 0x80C;

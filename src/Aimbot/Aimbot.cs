@@ -11,6 +11,7 @@ IntPtr client = swed.GetModuleBase("client.dll");
 // init ImGui and overlay
 Renderer renderer = new Renderer();
 renderer.Start().Wait(); 
+Vector2 screenSize = renderer.screenSize;
 
 // entity handling
 List<Entity> entities = new List<Entity>();
@@ -87,6 +88,13 @@ while (true) {
         entity.distance = Vector3.Distance(localPlayer.origin, entity.origin);
         entity.head = swed.ReadVec(boneMatrix, 6 * 32); // 6 = bone id for head, 32 = size of matrix = current step
 
+        // get 2d info
+        ViewMatrix viewMatrix = ReadMatrix(client + Offsets.dwViewMatrix);
+        //get head
+        entity.head2d = Calculate.WorldToScreen(viewMatrix, entity.head, (int)screenSize.X, (int)screenSize.Y); // floats have to be converted to int
+        // get distance from crosshair
+        entity.pixelDistance = Vector2.Distance(entity.head2d, new Vector2(screenSize.X / 2, screenSize.Y / 2));
+
         // addign entity to our own entity
         entities.Add(entity);
 
@@ -102,10 +110,19 @@ while (true) {
         Console.ResetColor();
     }
 
-    // sort entities and aim
-    entities = entities.OrderBy(o => o.distance).ToList(); // closest
+    // sort entities
+    if (renderer.fovAimbot) {  // if fov aimbot is enabled, sort by pixel distance
+        entities = entities.OrderBy(o => o.pixelDistance).ToList();
 
-    if (entities.Count > 0 && GetAsyncKeyState(HOTKEY) < 0 && renderer.aimbot) {    // count, hotkey, checkbox,
+        // check if entity is in FOV
+        if (entities[0].pixelDistance > renderer.FOV) continue;
+
+    } else {
+        entities = entities.OrderBy(o => o.distance).ToList(); // sort by distance 
+    }
+
+    if (entities.Count > 0 && GetAsyncKeyState(HOTKEY) < 0 && renderer.aimbot)
+    {    // count, hotkey, checkbox,
 
         // get view pos
         Vector3 playerView = Vector3.Add(localPlayer.origin, localPlayer.view); // origin is feet, view eye level
@@ -118,9 +135,45 @@ while (true) {
         // force new angles
         swed.WriteVec(client + Offsets.dwViewAngles, newAnglesVec3);
     }
-    Thread.Sleep(20); 
+    Thread.Sleep(10); 
 }
 
 // hotkey import
 [DllImport("user32.dll")]
 static extern short GetAsyncKeyState(int vKey);
+
+// converting viewMatrix into our own matrix
+ViewMatrix ReadMatrix(IntPtr matrixAddr)
+{
+    var viewMatrix = new ViewMatrix();
+    var matrix = swed.ReadMatrix(matrixAddr);
+
+    // converting into our matrix
+    // there is probably a smarter way to do this but who doesnt love hardcode << 
+
+    // first row
+    viewMatrix.m11 = matrix[0];
+    viewMatrix.m12 = matrix[1];
+    viewMatrix.m13 = matrix[2];
+    viewMatrix.m14 = matrix[3];
+
+    // second row 
+    viewMatrix.m21 = matrix[4];
+    viewMatrix.m22 = matrix[5];
+    viewMatrix.m23 = matrix[6];
+    viewMatrix.m24 = matrix[7];
+
+    // third row
+    viewMatrix.m31 = matrix[8];
+    viewMatrix.m32 = matrix[9];
+    viewMatrix.m33 = matrix[10];
+    viewMatrix.m34 = matrix[11];
+
+    // fourth row
+    viewMatrix.m41 = matrix[12];
+    viewMatrix.m42 = matrix[13];
+    viewMatrix.m43 = matrix[14];
+    viewMatrix.m44 = matrix[15];
+
+    return viewMatrix;
+}
