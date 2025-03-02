@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace CS2Cheats
 {
-    class Aimbot
+    class Cheats
     {
         // cancellation token sources for each task
         private static CancellationTokenSource _antiFlashCTS;
