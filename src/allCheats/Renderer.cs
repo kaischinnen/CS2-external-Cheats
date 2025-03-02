@@ -32,7 +32,7 @@ public class Renderer : Overlay
     protected override void Render()
     {   
         // set window pos
-        ImGui.SetNextWindowPos(new Vector2(0, 40), ImGuiCond.FirstUseEver); // (320,40) is right next to radar on 19020x1080. FirstUseEver sets position only the first time the window is drawn, allowing it to be moved afterwards
+        ImGui.SetNextWindowPos(new Vector2(320, 40), ImGuiCond.FirstUseEver); // (320,40) is right next to radar on 19020x1080. FirstUseEver sets position only the first time the window is drawn, allowing it to be moved afterwards
         ImGui.Begin("CS2 Cheat Settings", ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
 
         ImGui.Checkbox("AntiFlash", ref antiFlash);
