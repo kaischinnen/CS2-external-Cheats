@@ -1,7 +1,5 @@
 # CS2-external-Cheats
 
-A Collection for several external Cheats for Counter Strike 2. TBC. 
-
 ## Disclaimer
 1. Do *not* use any Cheats on VAC-Secured Servers. This programm is for educational purposes only. 
 2. Start the Game with "-insecure" Parameter which disallows any you of joining VAC-Secured Servers and therefore takes the risk of VAC ever detecting external Cheatware resuling in a ban.
