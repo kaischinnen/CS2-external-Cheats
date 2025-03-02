@@ -11,6 +11,7 @@ namespace CS2Cheats
         private static CancellationTokenSource _antiFlashCTS;
         private static CancellationTokenSource _radarHackCTS;
         private static CancellationTokenSource _bhopCTS;
+        private static CancellationTokenSource _triggerbotCTS;
 
         static void Main()
         {
@@ -129,6 +130,28 @@ namespace CS2Cheats
                     renderer.bhopRunning = 1;
                     _bhopCTS = new CancellationTokenSource();
                     Task.Run(() => RadarHack(swed, client, _bhopCTS.Token));
+                }
+
+                // triggerbot
+                if (renderer.triggerbot && _triggerbotCTS != null)
+                {
+                    _triggerbotCTS = new CancellationTokenSource();
+                    Task.Run(() => TriggerBot(swed, client, _triggerbotCTS.Token));
+                    renderer.triggerbotRunning = 1;
+                }
+
+                if (!renderer.triggerbot && renderer.triggerbotRunning == 0 || renderer.triggerbot && renderer.triggerbotRunning == 1) { }
+                else if (!renderer.triggerbot && _triggerbotCTS != null)
+                {
+                    _triggerbotCTS.Cancel();
+                    _triggerbotCTS.Dispose();
+                    renderer.triggerbotRunning = 0;
+                }
+                else if (renderer.triggerbot && _triggerbotCTS != null)
+                {
+                    renderer.triggerbotRunning = 1;
+                    _triggerbotCTS = new CancellationTokenSource();
+                    Task.Run(() => TriggerBot(swed, client, _triggerbotCTS.Token));
                 }
 
                 // loop through entity list
@@ -359,6 +382,64 @@ namespace CS2Cheats
                 }
                 Thread.Sleep(5);
             }
+        }
+
+        // Triggerbot
+        static void TriggerBot(Swed swed, IntPtr client, CancellationToken token) {
+
+            const int HOTKEY = 0x06; // mouse 4
+
+            IntPtr attack = client + Offsets.attack;
+            Entity localPlayer = new Entity();
+
+            while (!token.IsCancellationRequested) {
+
+                localPlayer.pawnAddress = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
+
+                if (localPlayer.pawnAddress == IntPtr.Zero)
+                {
+                    Thread.Sleep(10);
+                    continue;
+                }
+
+                localPlayer.team = swed.ReadInt(localPlayer.pawnAddress, Offsets.m_iTeamNum);
+                int targetEntityIndex = swed.ReadInt(localPlayer.pawnAddress, Offsets.m_iIDEntIndex);
+                if (targetEntityIndex <= 0)
+                {
+                    Thread.Sleep(5);
+                    continue;
+                }
+
+                IntPtr entityList = swed.ReadPointer(client, Offsets.dwEntityList);
+                IntPtr listEntry = swed.ReadPointer(entityList, 0x8 * (targetEntityIndex >> 9) + 0x10);
+                IntPtr targetEntity = swed.ReadPointer(listEntry, 0x78 * (targetEntityIndex & 0x1FF));
+
+                if (targetEntity == IntPtr.Zero || targetEntity == localPlayer.pawnAddress)
+                {
+                    Thread.Sleep(10);
+                    continue;
+                }
+
+                // get attributes
+                int targetTeam = swed.ReadInt(targetEntity, Offsets.m_iTeamNum);
+                uint targetLifeState = swed.ReadUInt(targetEntity, Offsets.m_lifeState);
+                int targetHealth = swed.ReadInt(targetEntity, Offsets.m_iHealth);
+
+                Console.WriteLine($"Target Team: {targetTeam}, LifeState: {targetLifeState}, Health: {targetHealth}");
+
+                // if target is enemy and alive
+                if (targetTeam == localPlayer.team && targetLifeState != 256)
+                {
+                    if (GetAsyncKeyState(HOTKEY) < 0)
+                    {
+                        swed.WriteInt(attack, 65537); // +attack
+                        Thread.Sleep(1);
+                        swed.WriteInt(attack, 256); // -attack
+                    }
+                }
+                Thread.Sleep(1);
+            }
+
         }
 
         // hotkey import
