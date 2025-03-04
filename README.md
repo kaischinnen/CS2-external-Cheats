@@ -8,5 +8,10 @@
 Download this Repository by forking it or downloading and unpacking the ZIP. 
 
 ## Usage
-1. Ensure the game process is running (being in the main menu will suffice).
-2. Run and build the solution "src/cs2cheats.sln" (e.g. via Visual Studio, Visual Studio Code with according Extensions, .NET SDK, ...).
+Ensure the game process is running (being in the main menu will suffice).
+If running on Windows:
+```
+cd ~\src\cs2cheats\publish\windows
+./CS2Cheats-exe
+```
+If you are running CS2 on any other OS than Windows, you will have to to build the solution "src/cs2cheats.sln" by yourself. .NET SDK is a prerequisite.
