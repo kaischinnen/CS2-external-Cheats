@@ -14,4 +14,6 @@ If running on Windows:
 cd ~\src\cs2cheats\publish\windows
 ./CS2Cheats-exe
 ```
-If you are running CS2 on any other OS than Windows, you will have to to build the solution "src/cs2cheats.sln" by yourself. .NET SDK is a prerequisite.
+If you are running CS2 on any other OS than Windows, you will have to to build the solution "src/cs2cheats.sln" by yourself. [netSDK-link] is a prerequisite.
+
+[netSDK-link]: https://dotnet.microsoft.com/en-us/
