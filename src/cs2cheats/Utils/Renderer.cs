@@ -11,7 +11,7 @@ public class Renderer : Overlay
     public bool fovAimbot = false;
     public bool aimOnTeam = false;
     public bool antiFlash = false;
-    public bool radarHack = false;
+    public bool radar = false;
     public bool bhop = false;
     public bool triggerbot = false;
 
@@ -19,10 +19,11 @@ public class Renderer : Overlay
     public Vector2 screenSize = new Vector2(1920, 1080);
     public float FOV = 50; // in pixels
     public Vector4 circleColor = new Vector4(1, 1, 1, 1); // r, g, b, a
+    public float circleThickness = 1.5f;
 
     // toggle variables, indicating whether the task for the feature is running or not.
     public int antiFlashRunning = 0;
-    public int radarHackRunning = 0;
+    public int radarRunning = 0;
     public int bhopRunning = 0;
     public int triggerbotRunning = 0;
     public int aimbotRunning = 0;
@@ -52,7 +53,7 @@ public class Renderer : Overlay
 
         // checkboxes
         ImGui.Checkbox("AntiFlash", ref antiFlash);
-        ImGui.Checkbox("Radar Hack", ref radarHack);
+        ImGui.Checkbox("Radar Hack", ref radar);
         ImGui.Checkbox("Bhop", ref bhop);
         ImGui.Checkbox("Triggerbot", ref triggerbot);
         ImGui.Checkbox("Target Teammates", ref aimOnTeam);
@@ -116,8 +117,9 @@ public class Renderer : Overlay
 
         // if fov aimbot is enabled, show fov settings
         if (fovAimbot)
-        {   
+        {
             ImGui.SliderFloat("FOV (Pixels)", ref FOV, 10, 300); // min, max
+            ImGui.SliderFloat("FOV Circle Thickness", ref circleThickness, 0.5f, 8.0f); // adjust thickness
 
             if (ImGui.CollapsingHeader("FOV Circle Color")) // minimize color picker
             {
@@ -130,7 +132,10 @@ public class Renderer : Overlay
             // draw cirlce
             DrawOverlay();
             ImDrawListPtr drawList = ImGui.GetForegroundDrawList(); // get the draw list
-            drawList.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor)); // center, radius, color
+
+            int segmentCount = (int)Math.Max(20, FOV / 2); // amount of "line pieces" are used to draw the circle and the larger the circle (fov), the more segments you want for proper smoothness 
+
+            drawList.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor), segmentCount, (int)circleThickness); // center, radius, color, thickness
             ImGui.End();
         } 
         ImGui.End();
