@@ -6,7 +6,7 @@ using System.Threading;
 namespace CS2Cheats
 {
     class Cheats
-    {
+    {  
         // cancellation token sources for each task
         private static CancellationTokenSource _antiFlashCTS;
         private static CancellationTokenSource _radarHackCTS;
@@ -14,6 +14,12 @@ namespace CS2Cheats
         private static CancellationTokenSource _triggerbotCTS;
         private static CancellationTokenSource _aimbotCTS;
         private static CancellationTokenSource _fovAimbotCTS;
+
+        public static async Task initOffsets()
+        {
+            await Utils.Offsets.UpdateOffsets();
+        }
+
 
         static void Main()
         {
@@ -28,6 +34,10 @@ namespace CS2Cheats
                 Console.WriteLine("CS2 process is not running!");
                 return;
             }
+
+
+            // init offsets every time this program is run (offsets change almost weekly)
+            Task.Run(async () => await initOffsets()).Wait();
 
             // get client.dll base address
             IntPtr client = swed.GetModuleBase("client.dll");
@@ -200,13 +210,13 @@ namespace CS2Cheats
         {
             while (!token.IsCancellationRequested)
             {
-                IntPtr localPlayerPawn = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
+                IntPtr localPlayerPawn = swed.ReadPointer(client, Utils.Offsets.dwLocalPlayerPawn);
 
-                float flashDuration = swed.ReadFloat(localPlayerPawn, Offsets.m_flFlashBangTime);
+                float flashDuration = swed.ReadFloat(localPlayerPawn, Utils.Offsets.m_flFlashBangTime);
 
                 if (flashDuration > 0)
                 {
-                    swed.WriteFloat(localPlayerPawn, Offsets.m_flFlashBangTime, 0);
+                    swed.WriteFloat(localPlayerPawn, Utils.Offsets.m_flFlashBangTime, 0);
                     Console.WriteLine("Avoided Flash!");
                 }
                 Thread.Sleep(2); // check every 2 ms
@@ -219,7 +229,7 @@ namespace CS2Cheats
             while (!token.IsCancellationRequested)
             {
                 // get entity list
-                IntPtr entityList = swed.ReadPointer(client + Offsets.dwEntityList);
+                IntPtr entityList = swed.ReadPointer(client + Utils.Offsets.dwEntityList);
 
                 // first entry
                 IntPtr listEntry = swed.ReadPointer(entityList, 0x10);
@@ -234,7 +244,7 @@ namespace CS2Cheats
                     if (currentController == IntPtr.Zero) continue;
 
                     // get pawn
-                    int pawnHandle = swed.ReadInt(currentController + Offsets.m_hPlayerPawn);
+                    int pawnHandle = swed.ReadInt(currentController + Utils.Offsets.m_hPlayerPawn);
                     if (pawnHandle == 0) continue;
 
                     // second entry, and now we get the specific pawn
@@ -242,7 +252,7 @@ namespace CS2Cheats
                     IntPtr currentPawn = swed.ReadPointer(listEntry2, 0x78 * (pawnHandle & 0x1FF)); // bitmask: extracts index within the entry
 
                     // write over spotted status
-                    swed.WriteBool(currentPawn + Offsets.m_entitySpottedState + Offsets.m_bSpotted, true);
+                    swed.WriteBool(currentPawn + Utils.Offsets.m_entitySpottedState + Utils.Offsets.m_bSpotted, true);
 
                     Thread.Sleep(50);
                     Console.Clear();
@@ -263,11 +273,11 @@ namespace CS2Cheats
             const uint PLUS_JUMP = 65537;
             const uint MINUS_JUMP = 256;
 
-            IntPtr jumpAddress = client + Offsets.jump;
+            IntPtr jumpAddress = client + 0x1883C30;
           
             while (!token.IsCancellationRequested)
             {
-                IntPtr playerPawnAddress = swed.ReadPointer(client, 0x188AF10);
+                IntPtr playerPawnAddress = swed.ReadPointer(client, Utils.Offsets.dwLocalPlayerPawn);
                 uint fFlag = swed.ReadUInt(playerPawnAddress, 0x3EC);
 
                 if (GetAsyncKeyState(SPACE_BAR) < 0)
@@ -282,7 +292,7 @@ namespace CS2Cheats
                         swed.WriteUInt(jumpAddress, MINUS_JUMP); // -jump
                     }
                 }
-                Thread.Sleep(5);
+                Thread.Sleep(10);
             }
         }
 
@@ -291,12 +301,12 @@ namespace CS2Cheats
 
             const int HOTKEY = 0x06; // mouse 4
 
-            IntPtr attack = client + Offsets.attack;
+            IntPtr attack = client + Utils.Offsets.attack;
             Entity localPlayer = new Entity();
 
             while (!token.IsCancellationRequested) {
 
-                localPlayer.pawnAddress = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
+                localPlayer.pawnAddress = swed.ReadPointer(client, Utils.Offsets.dwLocalPlayerPawn);
 
                 if (localPlayer.pawnAddress == IntPtr.Zero)
                 {
@@ -304,15 +314,15 @@ namespace CS2Cheats
                     continue;
                 }
 
-                localPlayer.team = swed.ReadInt(localPlayer.pawnAddress, Offsets.m_iTeamNum);
-                int targetEntityIndex = swed.ReadInt(localPlayer.pawnAddress, Offsets.m_iIDEntIndex);
+                localPlayer.team = swed.ReadInt(localPlayer.pawnAddress, Utils.Offsets.m_iTeamNum);
+                int targetEntityIndex = swed.ReadInt(localPlayer.pawnAddress, Utils.Offsets.m_iIDEntIndex);
                 if (targetEntityIndex <= 0)
                 {
                     Thread.Sleep(5);
                     continue;
                 }
 
-                IntPtr entityList = swed.ReadPointer(client, Offsets.dwEntityList);
+                IntPtr entityList = swed.ReadPointer(client, Utils.Offsets.dwEntityList);
                 IntPtr listEntry = swed.ReadPointer(entityList, 0x8 * (targetEntityIndex >> 9) + 0x10);
                 IntPtr targetEntity = swed.ReadPointer(listEntry, 0x78 * (targetEntityIndex & 0x1FF));
 
@@ -323,9 +333,9 @@ namespace CS2Cheats
                 }
 
                 // get attributes
-                int targetTeam = swed.ReadInt(targetEntity, Offsets.m_iTeamNum);
-                uint targetLifeState = swed.ReadUInt(targetEntity, Offsets.m_lifeState);
-                int targetHealth = swed.ReadInt(targetEntity, Offsets.m_iHealth);
+                int targetTeam = swed.ReadInt(targetEntity, Utils.Offsets.m_iTeamNum);
+                uint targetLifeState = swed.ReadUInt(targetEntity, Utils.Offsets.m_lifeState);
+                int targetHealth = swed.ReadInt(targetEntity, Utils.Offsets.m_iHealth);
 
                 Console.WriteLine($"Target Team: {targetTeam}, LifeState: {targetLifeState}, Health: {targetHealth}");
 
@@ -344,6 +354,7 @@ namespace CS2Cheats
            
         }
 
+        // Aimbot
         static void Aimbot(Renderer renderer, Swed swed, IntPtr client, CancellationToken token)
         {
             Vector2 screenSize = renderer.screenSize;
@@ -362,16 +373,16 @@ namespace CS2Cheats
                 Console.Clear();
 
                 // get entity list
-                IntPtr entityList = swed.ReadPointer(client + Offsets.dwEntityList);
+                IntPtr entityList = swed.ReadPointer(client + Utils.Offsets.dwEntityList);
 
                 // first entry
                 IntPtr listEntry = swed.ReadPointer(entityList, 0x10);
 
                 // get localPlayer information
-                localPlayer.pawnAddress = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
-                localPlayer.team = swed.ReadInt(localPlayer.pawnAddress + Offsets.m_iTeamNum);
-                localPlayer.origin = swed.ReadVec(localPlayer.pawnAddress + Offsets.m_vOldOrigin);
-                localPlayer.view = swed.ReadVec(localPlayer.pawnAddress + Offsets.m_vecViewOffset);
+                localPlayer.pawnAddress = swed.ReadPointer(client, Utils.Offsets.dwLocalPlayerPawn);
+                localPlayer.team = swed.ReadInt(localPlayer.pawnAddress + Utils.Offsets.m_iTeamNum);
+                localPlayer.origin = swed.ReadVec(localPlayer.pawnAddress + Utils.Offsets.m_vOldOrigin);
+                localPlayer.view = swed.ReadVec(localPlayer.pawnAddress + Utils.Offsets.m_vecViewOffset);
 
                 // loop through entity list
                 for (int i = 0; i < 64; i++) // max 64 entities
@@ -384,7 +395,7 @@ namespace CS2Cheats
                     if (currentController == IntPtr.Zero) continue;
 
                     // get pawn
-                    int pawnHandle = swed.ReadInt(currentController + Offsets.m_hPlayerPawn);
+                    int pawnHandle = swed.ReadInt(currentController + Utils.Offsets.m_hPlayerPawn);
                     if (pawnHandle == 0) continue;
 
                     // second entry, and now we get the specific pawn
@@ -394,16 +405,16 @@ namespace CS2Cheats
                     if (currentPawn == localPlayer.pawnAddress) continue; // if the entity is us
 
                     // get scene node
-                    IntPtr sceneNode = swed.ReadPointer(currentPawn + Offsets.m_pGameSceneNode);
+                    IntPtr sceneNode = swed.ReadPointer(currentPawn + Utils.Offsets.m_pGameSceneNode);
 
                     // get bone array / bone matrix
-                    IntPtr boneMatrix = swed.ReadPointer(sceneNode + Offsets.m_modelState + 0x80); // 0x80 is dwBoneMatrix offset
+                    IntPtr boneMatrix = swed.ReadPointer(sceneNode + Utils.Offsets.m_modelState + 0x80); // 0x80 is dwBoneMatrix offset
 
                     // get pawn attributes
-                    int health = swed.ReadInt(currentPawn + Offsets.m_iHealth);
-                    int team = swed.ReadInt(currentPawn + Offsets.m_iTeamNum);
-                    uint lifestate = swed.ReadUInt(currentPawn + Offsets.m_lifeState);
-                    string name = swed.ReadString(currentController + Offsets.m_iszPlayerName, 32);
+                    int health = swed.ReadInt(currentPawn + Utils.Offsets.m_iHealth);
+                    int team = swed.ReadInt(currentPawn + Utils.Offsets.m_iTeamNum);
+                    uint lifestate = swed.ReadUInt(currentPawn + Utils.Offsets.m_lifeState);
+                    string name = swed.ReadString(currentController + Utils.Offsets.m_iszPlayerName, 32);
 
                     // if attributes hold up, we add the entity to our own list
                     if (lifestate != 256) continue;
@@ -416,13 +427,13 @@ namespace CS2Cheats
                     entity.controllerAddress = currentController;
                     entity.health = health;
                     entity.lifestate = lifestate;
-                    entity.origin = swed.ReadVec(currentPawn + Offsets.m_vOldOrigin);
-                    entity.view = swed.ReadVec(currentPawn + Offsets.m_vecViewOffset);
+                    entity.origin = swed.ReadVec(currentPawn + Utils.Offsets.m_vOldOrigin);
+                    entity.view = swed.ReadVec(currentPawn + Utils.Offsets.m_vecViewOffset);
                     entity.distance = Vector3.Distance(localPlayer.origin, entity.origin);
                     entity.head = swed.ReadVec(boneMatrix, 6 * 32); // 6 = bone id for head, 32 = size of matrix = current step
 
                     // get 2d info
-                    ViewMatrix viewMatrix = ReadMatrix(swed, client + Offsets.dwViewMatrix);
+                    ViewMatrix viewMatrix = ReadMatrix(swed, client + Utils.Offsets.dwViewMatrix);
                     //get head
                     entity.head2d = Calculate.WorldToScreen(viewMatrix, entity.head, (int)screenSize.X, (int)screenSize.Y); // floats have to be converted to int
                                                                                                                             // get distance from crosshair
@@ -490,7 +501,7 @@ namespace CS2Cheats
                     Vector3 newAnglesVec3 = new Vector3(newAngles.Y, newAngles.X, 0.0f); // set y before x
 
                     // force new angles
-                    swed.WriteVec(client + Offsets.dwViewAngles, newAnglesVec3);
+                    swed.WriteVec(client + Utils.Offsets.dwViewAngles, newAnglesVec3);
                 }
             }
 

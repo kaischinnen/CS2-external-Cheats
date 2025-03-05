@@ -129,7 +129,7 @@ public class Renderer : Overlay
 
             // draw cirlce
             DrawOverlay();
-            ImDrawListPtr drawList = ImGui.GetWindowDrawList();
+            ImDrawListPtr drawList = ImGui.GetForegroundDrawList(); // get the draw list
             drawList.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor)); // center, radius, color
             ImGui.End();
         } 
