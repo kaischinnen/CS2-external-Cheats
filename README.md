@@ -24,9 +24,9 @@ Download this Repository by forking it or downloading and unpacking the ZIP.
 
 ## Usage
 Ensure the game process is running (being in the main menu will suffice).
-If running on Windows:
+If running on Windows(cd into Rootdirectory):
 ```
-cd ~\src\cs2cheats\publish\windows
+cd src\cs2cheats\publish\windows
 ./CS2Cheats-exe
 ```
 If you are running CS2 on any other OS than Windows, you will have to to build the solution `src/cs2cheats.sln` by yourself. [.NET][.net-link] is a prerequisite.
