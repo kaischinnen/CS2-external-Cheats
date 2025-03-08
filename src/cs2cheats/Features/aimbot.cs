@@ -1,8 +1,6 @@
 ﻿using Swed64;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System;
-
 
 namespace CS2Cheats.Features;
 
@@ -55,19 +53,24 @@ class AimbotC
                 IntPtr listEntry2 = swed.ReadPointer(entityList, 0x8 * ((pawnHandle & 0xFFF) >> 9) + 0x10);
                 IntPtr currentPawn = swed.ReadPointer(listEntry2, 0x78 * (pawnHandle & 0x1FF)); // bitmask: extracts index within the entry
 
-                if (currentPawn == localPlayer.pawnAddress) continue; // if the entity is us
+                // get pawn attributes
+                int health = swed.ReadInt(currentPawn + Utils.Offsets.m_iHealth);
+                int team = swed.ReadInt(currentPawn + Utils.Offsets.m_iTeamNum);
+                uint lifestate = swed.ReadUInt(currentPawn + Utils.Offsets.m_lifeState);
+                string name = swed.ReadString(currentController + Utils.Offsets.m_iszPlayerName, 32);
+                bool isSpotted = swed.ReadBool(currentPawn, Utils.Offsets.m_entitySpottedState + Utils.Offsets.m_bSpotted);
+
+                // visablity check
+                // if visabilityCheck is on and enemy is not spotted, we do nothing
+                if (renderer.visablityCheck && !isSpotted) continue;
+
+                if (currentPawn == localPlayer.pawnAddress) continue; // if the entity is us)
 
                 // get scene node
                 IntPtr sceneNode = swed.ReadPointer(currentPawn + Utils.Offsets.m_pGameSceneNode);
 
                 // get bone array / bone matrix
                 IntPtr boneMatrix = swed.ReadPointer(sceneNode + Utils.Offsets.m_modelState + 0x80); // 0x80 is dwBoneMatrix offset
-
-                // get pawn attributes
-                int health = swed.ReadInt(currentPawn + Utils.Offsets.m_iHealth);
-                int team = swed.ReadInt(currentPawn + Utils.Offsets.m_iTeamNum);
-                uint lifestate = swed.ReadUInt(currentPawn + Utils.Offsets.m_lifeState);
-                string name = swed.ReadString(currentController + Utils.Offsets.m_iszPlayerName, 32);
 
                 // if attributes hold up, we add the entity to our own list
                 if (lifestate != 256) continue;

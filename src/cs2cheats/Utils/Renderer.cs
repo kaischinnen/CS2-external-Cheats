@@ -15,6 +15,7 @@ public class Renderer : Overlay
     public bool bhop = false;
     public bool triggerbot = false;
     public bool smoothAimbot = false;
+    public bool visablityCheck = false;
 
     public float smoothAimbotValue = 1.0f; // default value
 
@@ -64,6 +65,7 @@ public class Renderer : Overlay
         ImGui.Checkbox("Triggerbot", ref triggerbot);
         ImGui.Checkbox("Target Teammates", ref aimOnTeam);
         ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
+        ImGui.Checkbox("VisablityCheck", ref visablityCheck);
 
         // if smooth aimbot is enabled, show slider
         if (smoothAimbot)
