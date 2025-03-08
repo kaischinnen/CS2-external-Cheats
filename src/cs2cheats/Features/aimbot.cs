@@ -157,17 +157,22 @@ class AimbotC
                 // if smooth aimbot is enabled
                 if (renderer.smoothAimbot)
                 {
-                    // Get the current angles
+                    // get the current angles
                     Vector3 currentAngles = swed.ReadVec(client + Utils.Offsets.dwViewAngles);
 
-                    // Calculate the difference between new and current angles
+                    // calc the difference between new and current angles
                     Vector3 delta = newAnglesVec3 - currentAngles;
 
-                    // get shortest path for delta
+                    // get shortest path for delta (example: we wanna turn 350 degrees, but it's shorter to turn -10 degrees)
+                    // delta + 180 to make sure all angles are postive
+                    // % 360 to ensure delta <= 360
+                    // + 360 to ensure delta >= 0
+                    // % 360 to ensure delta <= 360
+                    // shift angle back into [-180, 180]
                     delta.X = ((delta.X + 180) % 360 + 360) % 360 - 180;
                     delta.Y = ((delta.Y + 180) % 360 + 360) % 360 - 180;
 
-                    float smoothingFactor = 1.0f / renderer.smoothAimbotValue; // Convert smoothing to lerb factor t
+                    float smoothingFactor = 1.0f / renderer.smoothAimbotValue; // convert smoothing to lerp factor t
 
                     // apply lerp for smoothed angle
                     Vector3 smoothedAngles = new Vector3(
