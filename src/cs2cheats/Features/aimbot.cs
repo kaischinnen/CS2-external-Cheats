@@ -130,7 +130,7 @@ class AimbotC
                 catch (ArgumentOutOfRangeException)
                 {
                     Console.WriteLine("There seems to be no entitites in this server!");
-                    Thread.Sleep(50);
+                    Thread.Sleep(200); 
                     continue;
                 }
                 if (entities[0].pixelDistance > renderer.FOV)

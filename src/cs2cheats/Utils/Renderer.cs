@@ -64,8 +64,8 @@ public class Renderer : Overlay
         ImGui.Checkbox("Bhop", ref bhop);
         ImGui.Checkbox("Triggerbot", ref triggerbot);
         ImGui.Checkbox("Target Teammates", ref aimOnTeam);
-        ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
         ImGui.Checkbox("VisablityCheck", ref visablityCheck);
+        ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
 
         // if smooth aimbot is enabled, show slider
         if (smoothAimbot)
