@@ -12,6 +12,8 @@
 > Aimbot
 >
 > FOV Aimbot
+>
+> Adjust Smoothness of Aimbot
 
 and more!
 
