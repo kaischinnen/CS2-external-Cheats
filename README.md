@@ -1,5 +1,7 @@
 # CS2 External Cheats
 
+![SS](assets/photo.png)
+
 ## Functionalities
 > AntiFlash
 >
