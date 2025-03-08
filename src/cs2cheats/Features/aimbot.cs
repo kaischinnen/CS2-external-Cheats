@@ -1,6 +1,7 @@
 ﻿using Swed64;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System;
 
 
 namespace CS2Cheats.Features;
@@ -153,9 +154,37 @@ class AimbotC
                 Vector2 newAngles = Calculate.CalculateAngles(playerView, entities[0].head);
                 Vector3 newAnglesVec3 = new Vector3(newAngles.Y, newAngles.X, 0.0f); // set y before x
 
-                // force new angles
-                swed.WriteVec(client + Utils.Offsets.dwViewAngles, newAnglesVec3);
+                // if smooth aimbot is enabled
+                if (renderer.smoothAimbot)
+                {
+                    // Get the current angles
+                    Vector3 currentAngles = swed.ReadVec(client + Utils.Offsets.dwViewAngles);
+
+                    // Calculate the difference between new and current angles
+                    Vector3 delta = newAnglesVec3 - currentAngles;
+
+                    // get shortest path for delta
+                    delta.X = ((delta.X + 180) % 360 + 360) % 360 - 180;
+                    delta.Y = ((delta.Y + 180) % 360 + 360) % 360 - 180;
+
+                    float smoothingFactor = 1.0f / renderer.smoothAimbotValue; // Convert smoothing to lerb factor t
+
+                    // apply lerp for smoothed angle
+                    Vector3 smoothedAngles = new Vector3(
+                        Calculate.Lerp(currentAngles.X, currentAngles.X + delta.X, smoothingFactor),
+                        Calculate.Lerp(currentAngles.Y, currentAngles.Y + delta.Y, smoothingFactor),
+                        0.0f);
+
+                    // force new smoothed angles
+                    swed.WriteVec(client + Utils.Offsets.dwViewAngles, smoothedAngles);
+                }
+                else
+                { 
+                    // force new angles
+                    swed.WriteVec(client + Utils.Offsets.dwViewAngles, newAnglesVec3);
+                }
             }
+
         }
 
         // converting viewMatrix into our own matrix
@@ -198,4 +227,5 @@ class AimbotC
     // hotkey import
     [DllImport("user32.dll")]
     static extern short GetAsyncKeyState(int vkey);
+
 }

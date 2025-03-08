@@ -1,7 +1,7 @@
 using System.Numerics;
 
 public static class Calculate
-{
+{   
     public static Vector2 CalculateAngles(Vector3 from, Vector3 to)
     {
         float yaw, pitch;
@@ -48,5 +48,11 @@ public static class Calculate
         {
             return new Vector2(-1, -1);
         }
+    }
+
+    // lineare interpolation between two values (start, end) with a t value between 0 and 1 
+    public static float Lerp(float start, float end, float t)
+    {
+        return start + (end - start) * t;
     }
 }

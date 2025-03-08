@@ -14,6 +14,9 @@ public class Renderer : Overlay
     public bool radar = false;
     public bool bhop = false;
     public bool triggerbot = false;
+    public bool smoothAimbot = false;
+
+    public float smoothAimbotValue = 1.0f; // default value
 
     // fov information 
     public Vector2 screenSize = new Vector2(1920, 1080);
@@ -43,10 +46,13 @@ public class Renderer : Overlay
 
         // Because "CS2 Cheat Settings" is the longest text, we can use it to set the initial window size
         Vector2 titleSize = ImGui.CalcTextSize("CS2 Cheat Settings");
+        float minSWidth = titleSize.X + 40; // minimum width
+        float extraWidth = smoothAimbot ? 100 : 0; // adjust width if smooth aimbot is enabled
+
 
         if (!fovAimbot)
         {
-            ImGui.SetNextWindowSize(new Vector2(titleSize.X + 40, 0));
+            ImGui.SetNextWindowSize(new Vector2(minSWidth + extraWidth, 0));
         }
 
         ImGui.Begin("CS2 Cheat Settings", ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
@@ -57,6 +63,13 @@ public class Renderer : Overlay
         ImGui.Checkbox("Bhop", ref bhop);
         ImGui.Checkbox("Triggerbot", ref triggerbot);
         ImGui.Checkbox("Target Teammates", ref aimOnTeam);
+        ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
+
+        // if smooth aimbot is enabled, show slider
+        if (smoothAimbot)
+        {
+            ImGui.SliderFloat("Smoothness", ref smoothAimbotValue, 1f, 50.0f); // min, max
+        }
 
         // radio buttons to toggle between fov aimbot and aimbot
         if (ImGui.RadioButton("Aimbot", aimbotMode == 0))
