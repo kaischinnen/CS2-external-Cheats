@@ -1,5 +1,6 @@
 ﻿using Swed64;
 using System.Runtime.InteropServices;
+using CS2Cheats.Utils;
 
 namespace CS2Cheats.Features;
 
@@ -21,7 +22,7 @@ class BhopC
 
         while (!token.IsCancellationRequested)
         {
-            IntPtr playerPawnAddress = swed.ReadPointer(client, Utils.Offsets.dwLocalPlayerPawn);
+            IntPtr playerPawnAddress = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
             uint fFlag = swed.ReadUInt(playerPawnAddress, 0x3EC);
 
             if (GetAsyncKeyState(SPACE_BAR) < 0)

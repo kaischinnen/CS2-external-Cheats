@@ -132,7 +132,7 @@ namespace CS2Cheats
                 if (renderer.triggerbot && _triggerbotCTS == null)
                 {
                     _triggerbotCTS = new CancellationTokenSource();
-                    Task.Run(() => TriggerbotC.Triggerbot(swed, client, _triggerbotCTS.Token));
+                    Task.Run(() => TriggerbotC.Triggerbot(renderer, swed, client, _triggerbotCTS.Token));
                     renderer.triggerbotRunning = 1;
                 }
 
@@ -148,7 +148,7 @@ namespace CS2Cheats
                 {
                     renderer.triggerbotRunning = 1;
                     _triggerbotCTS = new CancellationTokenSource();
-                    Task.Run(() => TriggerbotC.Triggerbot(swed, client, _triggerbotCTS.Token));
+                    Task.Run(() => TriggerbotC.Triggerbot(renderer, swed, client, _triggerbotCTS.Token));
                 }
 
                 // aimbot

@@ -14,9 +14,6 @@ class AimbotC
         List<Entity> entities = new List<Entity>();
         Entity localPlayer = new Entity();
 
-        // consts
-        const int HOTKEY = 0x06; // mouse 4
-
         while (!token.IsCancellationRequested)
         {
             // reset
@@ -38,6 +35,7 @@ class AimbotC
             // loop through entity list
             for (int i = 0; i < 64; i++) // max 64 entities
             {
+
                 if (listEntry == IntPtr.Zero) continue;
 
                 // get current controller
@@ -91,8 +89,8 @@ class AimbotC
                 // get 2d info
                 ViewMatrix viewMatrix = ReadMatrix(swed, client + Utils.Offsets.dwViewMatrix);
                 //get head
-                entity.head2d = Calculate.WorldToScreen(viewMatrix, entity.head, (int)screenSize.X, (int)screenSize.Y); // floats have to be converted to int
-                                                                                                                        // get distance from crosshair
+                entity.head2d = Utils.Calculate.WorldToScreen(viewMatrix, entity.head, (int)screenSize.X, (int)screenSize.Y); // floats have to be converted to int
+                                                                                                                              // get distance from crosshair
                 entity.pixelDistance = Vector2.Distance(entity.head2d, new Vector2(screenSize.X / 2, screenSize.Y / 2));
 
                 // adding entity to our own entity list
@@ -117,7 +115,7 @@ class AimbotC
             // sort entities
             // if fov aimbot is turned on
             if (renderer.aimbotMode == 1)
-            {  
+            {
                 // if fov aimbot is enabled, sort entities by pixel distance
                 entities = entities.OrderBy(o => o.pixelDistance).ToList();
 
@@ -130,7 +128,7 @@ class AimbotC
                 catch (ArgumentOutOfRangeException)
                 {
                     Console.WriteLine("There seems to be no entitites in this server!");
-                    Thread.Sleep(200); 
+                    Thread.Sleep(200);
                     continue;
                 }
                 if (entities[0].pixelDistance > renderer.FOV)
@@ -146,7 +144,7 @@ class AimbotC
                 entities = entities.OrderBy(o => o.distance).ToList(); // sort by distance
             }
 
-            if (entities.Count > 0 && GetAsyncKeyState(HOTKEY) < 0 && (renderer.aimbot | renderer.fovAimbot))
+            if (entities.Count > 0 && GetAsyncKeyState(renderer.hotkey) < 0 && (renderer.aimbot | renderer.fovAimbot))
             {    // count, hotkey, checkbox,
 
                 // get view pos
@@ -154,7 +152,7 @@ class AimbotC
                 Vector3 entityView = Vector3.Add(entities[0].origin, entities[0].view);
 
                 // get angles
-                Vector2 newAngles = Calculate.CalculateAngles(playerView, entities[0].head);
+                Vector2 newAngles = Utils.Calculate.CalculateAngles(playerView, entities[0].head);
                 Vector3 newAnglesVec3 = new Vector3(newAngles.Y, newAngles.X, 0.0f); // set y before x
 
                 // if smooth aimbot is enabled
@@ -179,57 +177,56 @@ class AimbotC
 
                     // apply lerp for smoothed angle
                     Vector3 smoothedAngles = new Vector3(
-                        Calculate.Lerp(currentAngles.X, currentAngles.X + delta.X, smoothingFactor),
-                        Calculate.Lerp(currentAngles.Y, currentAngles.Y + delta.Y, smoothingFactor),
+                        Utils.Calculate.Lerp(currentAngles.X, currentAngles.X + delta.X, smoothingFactor),
+                        Utils.Calculate.Lerp(currentAngles.Y, currentAngles.Y + delta.Y, smoothingFactor),
                         0.0f);
 
                     // force new smoothed angles
                     swed.WriteVec(client + Utils.Offsets.dwViewAngles, smoothedAngles);
                 }
                 else
-                { 
+                {
                     // force new angles
                     swed.WriteVec(client + Utils.Offsets.dwViewAngles, newAnglesVec3);
                 }
             }
-
+        }
         }
 
         // converting viewMatrix into our own matrix
-        static ViewMatrix ReadMatrix(Swed swed, IntPtr matrixAddr)
-        {
-            var viewMatrix = new ViewMatrix();
-            var matrix = swed.ReadMatrix(matrixAddr);
+        public static ViewMatrix ReadMatrix(Swed swed, IntPtr matrixAddr)
+    {
+        var viewMatrix = new ViewMatrix();
+        var matrix = swed.ReadMatrix(matrixAddr);
 
-            // converting into our matrix
-            // there is probably a smarter way to do this but who doesn't love hardcodíng <<
+        // converting into our matrix
+        // there is probably a smarter way to do this but who doesn't love hardcodíng <<
 
-            // first row
-            viewMatrix.m11 = matrix[0];
-            viewMatrix.m12 = matrix[1];
-            viewMatrix.m13 = matrix[2];
-            viewMatrix.m14 = matrix[3];
+        // first row
+        viewMatrix.m11 = matrix[0];
+        viewMatrix.m12 = matrix[1];
+        viewMatrix.m13 = matrix[2];
+        viewMatrix.m14 = matrix[3];
 
-            // second row
-            viewMatrix.m21 = matrix[4];
-            viewMatrix.m22 = matrix[5];
-            viewMatrix.m23 = matrix[6];
-            viewMatrix.m24 = matrix[7];
+        // second row
+        viewMatrix.m21 = matrix[4];
+        viewMatrix.m22 = matrix[5];
+        viewMatrix.m23 = matrix[6];
+        viewMatrix.m24 = matrix[7];
 
-            // third row
-            viewMatrix.m31 = matrix[8];
-            viewMatrix.m32 = matrix[9];
-            viewMatrix.m33 = matrix[10];
-            viewMatrix.m34 = matrix[11];
+        // third row
+        viewMatrix.m31 = matrix[8];
+        viewMatrix.m32 = matrix[9];
+        viewMatrix.m33 = matrix[10];
+        viewMatrix.m34 = matrix[11];
 
-            // fourth row
-            viewMatrix.m41 = matrix[12];
-            viewMatrix.m42 = matrix[13];
-            viewMatrix.m43 = matrix[14];
-            viewMatrix.m44 = matrix[15];
+        // fourth row
+        viewMatrix.m41 = matrix[12];
+        viewMatrix.m42 = matrix[13];
+        viewMatrix.m43 = matrix[14];
+        viewMatrix.m44 = matrix[15];
 
-            return viewMatrix;
-        }
+        return viewMatrix;
     }
 
     // hotkey import

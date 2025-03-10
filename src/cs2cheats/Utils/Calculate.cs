@@ -1,5 +1,7 @@
 using System.Numerics;
 
+namespace CS2Cheats.Utils;
+
 public static class Calculate
 {
     // calc angle between two vectors

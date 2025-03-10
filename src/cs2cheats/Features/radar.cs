@@ -1,5 +1,4 @@
-﻿using ClickableTransparentOverlay.Win32;
-using Swed64;
+﻿using Swed64;
 using CS2Cheats.Utils;
 
 namespace CS2Cheats.Features;

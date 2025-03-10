@@ -1,7 +1,4 @@
 ﻿using System.Dynamic;
-using System.Linq.Expressions;
-using System.Net.Http;
-using System.Runtime.InteropServices.ComTypes;
 using Newtonsoft.Json;
 
 using CS2Cheats.DTO.ClientDllDTO;
@@ -10,7 +7,7 @@ using CS2Cheats.Utils.DTO.ButtonsDTO;
 
 namespace CS2Cheats.Utils;
 
-public abstract class Offsets 
+public class Offsets 
 {
     // offsets.cs
     public static int dwViewAngles;
