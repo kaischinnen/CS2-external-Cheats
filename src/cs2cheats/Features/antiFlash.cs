@@ -9,10 +9,13 @@ class AntiFlashC
     {
         while (!token.IsCancellationRequested)
         {
+            // get local player pawn
             IntPtr localPlayerPawn = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
 
+            // get flash duration
             float flashDuration = swed.ReadFloat(localPlayerPawn, Offsets.m_flFlashBangTime);
 
+            // if flashed, set flash duration to 0
             if (flashDuration > 0)
             {
                 swed.WriteFloat(localPlayerPawn, Offsets.m_flFlashBangTime, 0);

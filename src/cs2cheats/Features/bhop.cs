@@ -14,11 +14,11 @@ class BhopC
         const uint STANDING = 65665;
         const uint CROUCHING = 65667;
 
-        // Jump and -jump
+        // jump and -jump
         const uint PLUS_JUMP = 65537;
         const uint MINUS_JUMP = 256;
 
-        IntPtr jumpAddress = client + 0x1883C30;
+        IntPtr jumpAddress = client + Offsets.jump;
 
         while (!token.IsCancellationRequested)
         {

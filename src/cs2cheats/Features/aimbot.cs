@@ -1,6 +1,7 @@
 ﻿using Swed64;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using CS2Cheats.Utils;
 
 namespace CS2Cheats.Features;
 
@@ -21,19 +22,19 @@ class AimbotC
             Console.Clear();
 
             // get entity list
-            IntPtr entityList = swed.ReadPointer(client + Utils.Offsets.dwEntityList);
+            IntPtr entityList = swed.ReadPointer(client + Offsets.dwEntityList);
 
             // first entry
             IntPtr listEntry = swed.ReadPointer(entityList, 0x10);
 
             // get localPlayer information
-            localPlayer.pawnAddress = swed.ReadPointer(client, Utils.Offsets.dwLocalPlayerPawn);
-            localPlayer.team = swed.ReadInt(localPlayer.pawnAddress + Utils.Offsets.m_iTeamNum);
-            localPlayer.origin = swed.ReadVec(localPlayer.pawnAddress + Utils.Offsets.m_vOldOrigin);
-            localPlayer.view = swed.ReadVec(localPlayer.pawnAddress + Utils.Offsets.m_vecViewOffset);
+            localPlayer.pawnAddress = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
+            localPlayer.team = swed.ReadInt(localPlayer.pawnAddress + Offsets.m_iTeamNum);
+            localPlayer.origin = swed.ReadVec(localPlayer.pawnAddress + Offsets.m_vOldOrigin);
+            localPlayer.view = swed.ReadVec(localPlayer.pawnAddress + Offsets.m_vecViewOffset);
 
             // loop through entity list
-            for (int i = 0; i < 64; i++) // max 64 entities
+            for (int i = 0; i < 64; i++) // max 64 controllers
             {
 
                 if (listEntry == IntPtr.Zero) continue;
@@ -44,7 +45,7 @@ class AimbotC
                 if (currentController == IntPtr.Zero) continue;
 
                 // get pawn
-                int pawnHandle = swed.ReadInt(currentController + Utils.Offsets.m_hPlayerPawn);
+                int pawnHandle = swed.ReadInt(currentController + Offsets.m_hPlayerPawn);
                 if (pawnHandle == 0) continue;
 
                 // second entry, and now we get the specific pawn
@@ -52,11 +53,11 @@ class AimbotC
                 IntPtr currentPawn = swed.ReadPointer(listEntry2, 0x78 * (pawnHandle & 0x1FF)); // bitmask: extracts index within the entry
 
                 // get pawn attributes
-                int health = swed.ReadInt(currentPawn + Utils.Offsets.m_iHealth);
-                int team = swed.ReadInt(currentPawn + Utils.Offsets.m_iTeamNum);
-                uint lifestate = swed.ReadUInt(currentPawn + Utils.Offsets.m_lifeState);
-                string name = swed.ReadString(currentController + Utils.Offsets.m_iszPlayerName, 32);
-                bool isSpotted = swed.ReadBool(currentPawn, Utils.Offsets.m_entitySpottedState + Utils.Offsets.m_bSpotted);
+                int health = swed.ReadInt(currentPawn + Offsets.m_iHealth);
+                int team = swed.ReadInt(currentPawn + Offsets.m_iTeamNum);
+                uint lifestate = swed.ReadUInt(currentPawn + Offsets.m_lifeState);
+                string name = swed.ReadString(currentController + Offsets.m_iszPlayerName, 32);
+                bool isSpotted = swed.ReadBool(currentPawn, Offsets.m_entitySpottedState + Offsets.m_bSpotted);
 
                 // visablity check
                 // if visabilityCheck is on and enemy is not spotted, we do nothing
@@ -65,10 +66,10 @@ class AimbotC
                 if (currentPawn == localPlayer.pawnAddress) continue; // if the entity is us)
 
                 // get scene node
-                IntPtr sceneNode = swed.ReadPointer(currentPawn + Utils.Offsets.m_pGameSceneNode);
+                IntPtr sceneNode = swed.ReadPointer(currentPawn + Offsets.m_pGameSceneNode);
 
                 // get bone array / bone matrix
-                IntPtr boneMatrix = swed.ReadPointer(sceneNode + Utils.Offsets.m_modelState + 0x80); // 0x80 is dwBoneMatrix offset
+                IntPtr boneMatrix = swed.ReadPointer(sceneNode + Offsets.m_modelState + 0x80); // 0x80 is dwBoneMatrix offset
 
                 // if attributes hold up, we add the entity to our own list
                 if (lifestate != 256) continue;
@@ -81,16 +82,18 @@ class AimbotC
                 entity.controllerAddress = currentController;
                 entity.health = health;
                 entity.lifestate = lifestate;
-                entity.origin = swed.ReadVec(currentPawn + Utils.Offsets.m_vOldOrigin);
-                entity.view = swed.ReadVec(currentPawn + Utils.Offsets.m_vecViewOffset);
+                entity.origin = swed.ReadVec(currentPawn + Offsets.m_vOldOrigin);
+                entity.view = swed.ReadVec(currentPawn + Offsets.m_vecViewOffset);
                 entity.distance = Vector3.Distance(localPlayer.origin, entity.origin);
                 entity.head = swed.ReadVec(boneMatrix, 6 * 32); // 6 = bone id for head, 32 = size of matrix = current step
 
                 // get 2d info
-                ViewMatrix viewMatrix = ReadMatrix(swed, client + Utils.Offsets.dwViewMatrix);
+                ViewMatrix viewMatrix = ReadMatrix(swed, client + Offsets.dwViewMatrix);
+
                 //get head
-                entity.head2d = Utils.Calculate.WorldToScreen(viewMatrix, entity.head, (int)screenSize.X, (int)screenSize.Y); // floats have to be converted to int
-                                                                                                                              // get distance from crosshair
+                entity.head2d = Calculate.WorldToScreen(viewMatrix, entity.head, (int)screenSize.X, (int)screenSize.Y); // floats have to be converted to int
+
+                // get distance from crosshair
                 entity.pixelDistance = Vector2.Distance(entity.head2d, new Vector2(screenSize.X / 2, screenSize.Y / 2));
 
                 // adding entity to our own entity list
@@ -131,6 +134,7 @@ class AimbotC
                     Thread.Sleep(200);
                     continue;
                 }
+                // if closes entity is not in fov, we do nothing
                 if (entities[0].pixelDistance > renderer.FOV)
                 {
                     Thread.Sleep(2);
@@ -144,22 +148,23 @@ class AimbotC
                 entities = entities.OrderBy(o => o.distance).ToList(); // sort by distance
             }
 
+            // more than 0 entities, hotkey pressed, aimbot enabled
             if (entities.Count > 0 && GetAsyncKeyState(renderer.hotkey) < 0 && (renderer.aimbot | renderer.fovAimbot))
-            {    // count, hotkey, checkbox,
+            {   
 
                 // get view pos
                 Vector3 playerView = Vector3.Add(localPlayer.origin, localPlayer.view); // origin is feet, view eye level
                 Vector3 entityView = Vector3.Add(entities[0].origin, entities[0].view);
 
                 // get angles
-                Vector2 newAngles = Utils.Calculate.CalculateAngles(playerView, entities[0].head);
+                Vector2 newAngles = Calculate.CalculateAngles(playerView, entities[0].head);
                 Vector3 newAnglesVec3 = new Vector3(newAngles.Y, newAngles.X, 0.0f); // set y before x
 
                 // if smooth aimbot is enabled
                 if (renderer.smoothAimbot)
                 {
                     // get the current angles
-                    Vector3 currentAngles = swed.ReadVec(client + Utils.Offsets.dwViewAngles);
+                    Vector3 currentAngles = swed.ReadVec(client + Offsets.dwViewAngles);
 
                     // calc the difference between new and current angles
                     Vector3 delta = newAnglesVec3 - currentAngles;
@@ -177,17 +182,17 @@ class AimbotC
 
                     // apply lerp for smoothed angle
                     Vector3 smoothedAngles = new Vector3(
-                        Utils.Calculate.Lerp(currentAngles.X, currentAngles.X + delta.X, smoothingFactor),
-                        Utils.Calculate.Lerp(currentAngles.Y, currentAngles.Y + delta.Y, smoothingFactor),
+                        Calculate.Lerp(currentAngles.X, currentAngles.X + delta.X, smoothingFactor),
+                        Calculate.Lerp(currentAngles.Y, currentAngles.Y + delta.Y, smoothingFactor),
                         0.0f);
 
                     // force new smoothed angles
-                    swed.WriteVec(client + Utils.Offsets.dwViewAngles, smoothedAngles);
+                    swed.WriteVec(client + Offsets.dwViewAngles, smoothedAngles);
                 }
                 else
                 {
                     // force new angles
-                    swed.WriteVec(client + Utils.Offsets.dwViewAngles, newAnglesVec3);
+                    swed.WriteVec(client + Offsets.dwViewAngles, newAnglesVec3);
                 }
             }
         }

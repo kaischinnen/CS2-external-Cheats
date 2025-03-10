@@ -63,7 +63,7 @@ public class Renderer : Overlay
         ImGui.Begin("CS2 Cheat Settings", ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
 
         // hotkey config
-        if (ImGui.CollapsingHeader("Change hotkey"))
+        if (ImGui.CollapsingHeader("Change Hotkey"))
         {
             // set the header background color
             ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
@@ -227,7 +227,7 @@ public class Renderer : Overlay
             );
     }
 
-    // mapping ImGuiKey to Virtual Key Codes
+    // mapping ImGuiKey to Virtual Key Codes (ref: https://learn.microsoft.com/de-de/windows/win32/inputdev/virtual-key-codes)
     public static int ImGuiKeyToVkey(ImGuiKey key)
     {
         switch (key)

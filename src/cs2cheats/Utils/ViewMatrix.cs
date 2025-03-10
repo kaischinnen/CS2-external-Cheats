@@ -1,4 +1,6 @@
-﻿public class ViewMatrix // 4x4
+﻿namespace CS2Cheats.Utils;
+
+public class ViewMatrix // 4x4
 {
     public float m11, m12, m13, m14;
     public float m21, m22, m23, m24;

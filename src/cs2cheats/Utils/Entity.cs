@@ -1,5 +1,7 @@
 using System.Numerics;
 
+namespace CS2Cheats.Utils;
+
 public class Entity {
     public IntPtr pawnAddress { get; set; }
     public IntPtr controllerAddress { get; set; }
