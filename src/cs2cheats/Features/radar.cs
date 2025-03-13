@@ -35,8 +35,8 @@ public class RadarC
                 // write over spotted status
                 swed.WriteBool(currentPawn + Offsets.m_entitySpottedState + Offsets.m_bSpotted, true);
 
-                Thread.Sleep(50);
-                Console.Clear();
+                // let cpu rest
+                Thread.Sleep(100);
             }
         }
     }

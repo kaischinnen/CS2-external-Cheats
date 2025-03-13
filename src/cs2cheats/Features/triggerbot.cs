@@ -6,6 +6,7 @@ namespace CS2Cheats.Features;
 
 class TriggerbotC
 {
+    // detailed comments in aimbot.cs as the code is very similar
     public static void Triggerbot(Renderer renderer, Swed swed, IntPtr client, CancellationToken token)
     {
         IntPtr attack = client + Offsets.attack;

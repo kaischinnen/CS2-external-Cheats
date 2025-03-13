@@ -1,3 +1,4 @@
+using Swed64;
 using System.Numerics;
 
 namespace CS2Cheats.Utils;

@@ -13,6 +13,7 @@ namespace CS2Cheats
         private static CancellationTokenSource _triggerbotCTS;
         private static CancellationTokenSource _aimbotCTS;
         private static CancellationTokenSource _fovAimbotCTS;
+        private static CancellationTokenSource _espCTS;
 
         public static async Task initOffsets()
         {
@@ -197,6 +198,30 @@ namespace CS2Cheats
                     renderer.fovAimbotRunning = 1;
                     _fovAimbotCTS = new CancellationTokenSource();
                     Task.Run(() => AimbotC.Aimbot(renderer, swed, client, _fovAimbotCTS.Token));
+                }
+
+                // esp
+                if (renderer.esp && _espCTS == null)
+                {
+                    _espCTS = new CancellationTokenSource();
+                    Task.Run(() => EspC.Esp(renderer, swed, client, _espCTS.Token));
+                    renderer.espRunning = 1;
+                }
+
+                if (!renderer.esp && renderer.espRunning == 0 || renderer.esp && renderer.espRunning == 1) { }
+
+                else if (!renderer.esp && _espCTS != null)
+                {
+                    _espCTS.Cancel();
+                    _espCTS.Dispose();
+                    renderer.espRunning = 0;
+                }
+
+                else if (renderer.esp && _espCTS != null)
+                {
+                    renderer.espRunning = 1;
+                    _espCTS = new CancellationTokenSource();
+                    Task.Run(() => EspC.Esp(renderer, swed, client, _espCTS.Token));
                 }
 
                 Thread.Sleep(10);

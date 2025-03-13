@@ -55,7 +55,7 @@ class AimbotC
                 // get pawn attributes
                 int health = swed.ReadInt(currentPawn + Offsets.m_iHealth);
                 int team = swed.ReadInt(currentPawn + Offsets.m_iTeamNum);
-                uint lifestate = swed.ReadUInt(currentPawn + Offsets.m_lifeState);
+                int lifestate = swed.ReadInt(currentPawn + Offsets.m_lifeState);
                 string name = swed.ReadString(currentController + Offsets.m_iszPlayerName, 32);
                 bool isSpotted = swed.ReadBool(currentPawn, Offsets.m_entitySpottedState + Offsets.m_bSpotted);
 
