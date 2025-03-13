@@ -140,9 +140,10 @@ public class Renderer : Overlay
 
         ImGui.Checkbox("Bone ESP", ref esp);
 
+        // if esp is enabled
         if (esp)
         {
-            ImGui.SliderFloat("bone thickness", ref boneThickness, 4, 800);
+            ImGui.SliderFloat("bone thickness", ref boneThickness, 4, 600);
 
             ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header hovered color
