@@ -69,6 +69,7 @@ public static class Calculate
         // loop through all the bones 
         foreach (var boneId in Enum.GetValues(typeof(BoneIds)))
         {
+            // convert bytes to float
             float x = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 0); // float = 4 bytes
             float y = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 4);
             float z = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 8);

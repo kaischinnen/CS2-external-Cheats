@@ -1,6 +1,5 @@
 ﻿using Swed64;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using CS2Cheats.Utils;
 
 namespace CS2Cheats.Features;
@@ -53,23 +52,22 @@ class EspC
 
                 if (lifeState != 256) continue;
 
-                // array of 16 floats representing the view matrix
                 ViewMatrix viewMatrix = Reader.ReadMatrix(swed, client + Offsets.dwViewMatrix);
 
                 Entity entity = new Entity();
 
                 // update attributes
-                entity.pawnAddress = currentPawn;
-                entity.team = team;
-                entity.origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin);
-                entity.position2d = Calculate.WorldToScreen(viewMatrix, entity.origin, (int)renderer.screenSize.X, (int)renderer.screenSize.Y);
-                entity.lifestate = lifeState;
-                entity.distance = Vector3.Distance(entity.origin, localPlayer.origin);
-                entity.bones = Calculate.ReadBones(boneMatrix, swed);
-                entity.bones2d = Calculate.ReadBones2d(entity.bones, viewMatrix, renderer.screenSize);
-                entity.view = swed.ReadVec(currentPawn, Offsets.m_vecViewOffset); 
-                entity.viewPosition2d = Calculate.WorldToScreen(viewMatrix, Vector3.Add(entity.origin, entity.view), (int)renderer.screenSize.X, (int)renderer.screenSize.Y);
-
+                entity.health = swed.ReadInt(currentPawn, Offsets.m_iHealth); // health
+                entity.team = team; // team
+                entity.lifestate = lifeState; // lifestate
+                entity.origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin); // origin position on map (3d)
+                entity.position2d = Calculate.WorldToScreen(viewMatrix, entity.origin, (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // 2d position 
+                entity.distance = Vector3.Distance(entity.origin, localPlayer.origin); // distance from entity to localPlayer
+                entity.bones = Calculate.ReadBones(boneMatrix, swed); // list of Vec3 bones
+                entity.bones2d = Calculate.ReadBones2d(entity.bones, viewMatrix, renderer.screenSize); // bones on screen
+                entity.view = swed.ReadVec(currentPawn, Offsets.m_vecViewOffset); // view position
+                entity.viewPosition2d = Calculate.WorldToScreen(viewMatrix, Vector3.Add(entity.origin, entity.view), (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // view position on screen
+                
                 entities.Add(entity);
 
                 Console.ForegroundColor = ConsoleColor.Green;

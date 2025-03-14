@@ -6,6 +6,9 @@ using System.Numerics;
 
 public class Renderer : Overlay
 {
+    // window state (used for closing the window)
+    public bool isWindowOpen = true;
+
     // checkbox values
     public bool aimbot = false;
     public bool fovAimbot = false;
@@ -17,6 +20,10 @@ public class Renderer : Overlay
     public bool smoothAimbot = false;
     public bool visablityCheck = false;
     public bool esp = false;
+    public bool drawBones = true;
+    public bool drawLines = true;
+    public bool drawRectangles = true;
+    public bool drawHealth = false;
 
     // initial smooth aimbot value  
     public float smoothAimbotValue = 1.0f; 
@@ -35,8 +42,9 @@ public class Renderer : Overlay
     Vector4 teamColor = new Vector4(0, 1, 0, 1); // green
     Vector4 enemyColor = new Vector4(1, 0, 0, 1);  // red
     Vector4 boneColor = new Vector4(1, 1, 1, 1); // default white
-
     public float boneThickness = 4;
+    public float lineThickness = 1.0f;
+    public float rectThickness = 1.0f;
 
     // toggle variables, indicating whether the task for the feature is running or not.
     public int antiFlashRunning = 0;
@@ -76,7 +84,13 @@ public class Renderer : Overlay
         }
 
         // title bar
-        ImGui.Begin("CS2 Cheat Settings", ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
+        ImGui.Begin("CS2 Cheat Settings", ref isWindowOpen, ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
+
+        // close window and stop process if close button is pressed
+        if (!isWindowOpen)
+        {
+            Environment.Exit(0);
+        } 
 
         // render hotkey button(s)
         RenderHotkey();
@@ -87,7 +101,7 @@ public class Renderer : Overlay
         ImGui.Checkbox("Bhop", ref bhop);
         ImGui.Checkbox("Triggerbot", ref triggerbot);
         ImGui.Checkbox("Target Teammates", ref aimOnTeam);
-        ImGui.Checkbox("VisablityCheck", ref visablityCheck);
+        ImGui.Checkbox("Check Visability", ref visablityCheck);
         ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
 
         // if smooth aimbot is enabled, show slider
@@ -113,7 +127,7 @@ public class Renderer : Overlay
     }
 
     // ------------------ Render Functions ------------------ // 
-    void RenderHotkey()
+    private void RenderHotkey()
     {
         // hotkey config
         if (ImGui.CollapsingHeader("Change Hotkey"))
@@ -161,13 +175,29 @@ public class Renderer : Overlay
             ImGui.PopStyleVar(3);
         }
     }
-
-    void RenderEsp()
+    private void RenderEsp()
     {
         // if esp is enabled
         if (esp)
         {
-            ImGui.SliderFloat("bone thickness", ref boneThickness, 4, 600);
+            ImGui.Separator();
+
+            // draw bones
+            ImGui.Checkbox("Draw Bones", ref drawBones);
+            if (drawBones) ImGui.SliderFloat("Bone Thickness", ref boneThickness, 4, 600);
+
+            // draw lines
+            ImGui.Checkbox("Draw Lines", ref drawLines);
+            if (drawLines) ImGui.SliderFloat("Line Thickness", ref lineThickness, 1, 5);
+
+            // draw rectangles
+            ImGui.Checkbox("Draw Rectangles", ref drawRectangles);
+            if (drawRectangles) ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
+
+            // draw health
+            ImGui.Checkbox("Draw Health", ref drawHealth);
+
+            ImGui.Separator();
 
             ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header hovered color
@@ -199,17 +229,27 @@ public class Renderer : Overlay
 
             foreach (var entity in entities)
             {
-                if (isEntityOnScreen(entity))
+                // if entity is on screen, render esp accordingly
+                if (IsEntityOnScreen(entity))
                 {
-                    // draw skeleton 
-                    DrawBones(entity);
+                    // draw skeleton
+                    if (drawBones) DrawBones(entity);
+
+                    // draw line
+                    if (drawLines) DrawLine(entity);
+
+                    // draw rectangle
+                    if (drawRectangles) DrawRecangle(entity);
+
+                    // draw health bar
+                    if (drawHealth) DrawHealth(entity);
                 }
             }
             ImGui.PopStyleColor(3);
             ImGui.End();
         }
     }
-    void SetWindowAesthetics()
+    private void SetWindowAesthetics()
     {
         // set window aesthetics
         ImGui.PushStyleColor(ImGuiCol.WindowBg, windowBgColor); // Set window background color
@@ -225,7 +265,7 @@ public class Renderer : Overlay
         ImGui.PushStyleColor(ImGuiCol.SliderGrabActive, accentColor); // Active slider handle color
         ImGui.PushStyleColor(ImGuiCol.FrameBg, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // Slider background 
     }
-    void RenderFovAimbot()
+    private void RenderFovAimbot()
     {
         // if fov aimbot is enabled, show fov settings
         if (fovAimbot)
@@ -258,7 +298,7 @@ public class Renderer : Overlay
             ImGui.End();
         }
     }
-    void RenderAimboRadioButtons()
+    private void RenderAimboRadioButtons()
     {
         // radio buttons to toggle between fov aimbot and aimbot
 
@@ -309,8 +349,8 @@ public class Renderer : Overlay
     }
 
     // ------------------ ESP Functions ------------------ //
-    void DrawBones(Entity entity)
-    {
+    private void DrawBones(Entity entity)
+    {   
         uint uintColor = ImGui.ColorConvertFloat4ToU32(boneColor);
 
         float currentBoneThickness = boneThickness / entity.distance; // scale thickness based on distance
@@ -333,7 +373,53 @@ public class Renderer : Overlay
         drawList.AddCircle(entity.bones2d[2], currentBoneThickness + 3, uintColor);
     }
 
-    bool isEntityOnScreen(Entity entity)
+    private void DrawLine(Entity entity)
+    {
+        Vector4 lineColor = localPlayer.team == entity.team ? teamColor : enemyColor; // set color based on team
+
+        // draw line from the bottom mid of the screen to the entity
+        drawList.AddLine(new Vector2(screenSize.X / 2, screenSize.Y), entity.position2d, ImGui.ColorConvertFloat4ToU32(lineColor), lineThickness); 
+    }
+
+    private void DrawRecangle(Entity entity)
+    {
+        // set color based on team
+        Vector4 rectColor = localPlayer.team == entity.team ? teamColor : enemyColor; 
+
+        // height = head2d - feet2d
+        float entityHeight = entity.viewPosition2d.Y - entity.position2d.Y;
+
+        // calc rect dimensions
+
+        // top left corner
+        Vector2 rectTop = new Vector2(entity.position2d.X - entityHeight / 4, entity.position2d.Y); // position2d.X - entityHeight / 3, push X to the left
+
+        // bottom right corner
+        Vector2 rectBottom = new Vector2(entity.position2d.X + entityHeight / 4, entity.viewPosition2d.Y); // push X to the right
+
+        drawList.AddRect(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(rectColor), 0.0f, ImDrawFlags.None, rectThickness);
+    }
+
+    private void DrawHealth(Entity entity)
+    {
+        float entityHeight = entity.position2d.Y - entity.viewPosition2d.Y;
+
+        float boxLeft = entity.position2d.X - entityHeight / 4;
+        float boxRight = entity.position2d.X + entityHeight / 4;
+
+        float barPercentWidth = 0.05f; // 5% of the box width
+        float barPixelWidth = barPercentWidth * (boxRight - boxLeft);
+
+        float barHeight = entityHeight * (entity.health / 100f);
+
+        Vector2 barTop = new Vector2(boxLeft - barPixelWidth, entity.position2d.Y - barHeight);
+        Vector2 barBottom = new Vector2(boxLeft, entity.position2d.Y);
+
+        Vector4 barColor = new Vector4(0, 1, 0, 1);
+
+        drawList.AddRectFilled(barTop, barBottom, ImGui.ColorConvertFloat4ToU32(barColor));
+    }
+    private bool IsEntityOnScreen(Entity entity)
     {
         if (entity.position2d.X > 0 && entity.position2d.X < screenSize.X && entity.position2d.Y > 0 && entity.position2d.Y < screenSize.Y)
         {
@@ -357,7 +443,7 @@ public class Renderer : Overlay
 
     // ------------------ ImGui Functions ------------------ //
 
-    void DrawOverlay()
+    private void DrawOverlay()
     {
         ImGui.Begin("overlay", ImGuiWindowFlags.NoDecoration
             | ImGuiWindowFlags.NoBackground
@@ -371,7 +457,7 @@ public class Renderer : Overlay
     }
 
     // mapping ImGuiKey to Virtual Key Codes (see: https://learn.microsoft.com/de-de/windows/win32/inputdev/virtual-key-codes)
-    public static int ImGuiKeyToVkey(ImGuiKey key)
+    private static int ImGuiKeyToVkey(ImGuiKey key)
     {
         switch (key)
         {   
