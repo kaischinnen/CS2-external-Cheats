@@ -21,9 +21,10 @@ public class Renderer : Overlay
     public bool visablityCheck = false;
     public bool esp = false;
     public bool drawBones = true;
+    public bool drawJoints = true;
     public bool drawLines = true;
     public bool drawRectangles = true;
-    public bool drawHealth = false;
+    public bool drawHealth = true;
 
     // initial smooth aimbot value  
     public float smoothAimbotValue = 1.0f; 
@@ -35,14 +36,22 @@ public class Renderer : Overlay
     public float circleThickness = 1.5f;
 
     // esp information
-    public ConcurrentQueue<Entity> entities = new ConcurrentQueue<Entity>(); // thread safe queue
+
+    // entity queue and objects (thread safe)
+    public ConcurrentQueue<Entity> entities = new ConcurrentQueue<Entity>(); 
     public Entity localPlayer = new Entity();
     public readonly object entityLock = new object(); // lock for entities 
     ImDrawListPtr drawList;
+
+    // esp colors
     Vector4 teamColor = new Vector4(0, 1, 0, 1); // green
     Vector4 enemyColor = new Vector4(1, 0, 0, 1);  // red
     Vector4 boneColor = new Vector4(1, 1, 1, 1); // default white
+    Vector4 jointColor = new Vector4(255, 0, 210, 1); // default purple
+
+    // esp settings
     public float boneThickness = 4;
+    public float joinRadius = 3;
     public float lineThickness = 1.0f;
     public float rectThickness = 1.0f;
 
@@ -181,10 +190,51 @@ public class Renderer : Overlay
         if (esp)
         {
             ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Separator();
+
+            ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
+            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header hovered color
+            ImGui.PushStyleColor(ImGuiCol.HeaderActive, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header active color
+
+            // drawing functions 
+
+            // draw health
+            ImGui.Checkbox("Draw Health", ref drawHealth);
 
             // draw bones
             ImGui.Checkbox("Draw Bones", ref drawBones);
-            if (drawBones) ImGui.SliderFloat("Bone Thickness", ref boneThickness, 4, 600);
+            if (drawBones)
+            {
+                ImGui.SliderFloat("Bone Thickness", ref boneThickness, 4, 600);
+
+                if (ImGui.CollapsingHeader("Bone Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##bonecolor", ref boneColor, ImGuiColorEditFlags.NoSidePreview);
+                    ImGui.PopItemWidth();
+                }
+            }
+
+            ImGui.Separator();
+
+            // draw joints
+            ImGui.Checkbox("Draw Joints", ref drawJoints);
+
+            if (drawJoints)
+            {
+                ImGui.SliderFloat("Joint Radius", ref joinRadius, 1, 8);
+
+                if (ImGui.CollapsingHeader("Joint Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##jointcolor", ref jointColor, ImGuiColorEditFlags.NoSidePreview);
+                    ImGui.PopItemWidth();
+
+                }
+            }
+
+            ImGui.Separator();
 
             // draw lines
             ImGui.Checkbox("Draw Lines", ref drawLines);
@@ -194,35 +244,29 @@ public class Renderer : Overlay
             ImGui.Checkbox("Draw Rectangles", ref drawRectangles);
             if (drawRectangles) ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
 
-            // draw health
-            ImGui.Checkbox("Draw Health", ref drawHealth);
+            // team
+            if (drawRectangles || drawLines)
+            {
+                if (ImGui.CollapsingHeader("Team Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##teamcolor", ref teamColor, ImGuiColorEditFlags.NoSidePreview);
+                    ImGui.PopItemWidth();
+
+                }
+
+                if (ImGui.CollapsingHeader("Enemy Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##enemycolor", ref enemyColor, ImGuiColorEditFlags.NoSidePreview);
+                    ImGui.PopItemWidth();
+
+                }
+            }
 
             ImGui.Separator();
-
-            ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
-            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header hovered color
-            ImGui.PushStyleColor(ImGuiCol.HeaderActive, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header active color
-
-            // color scheme
-
-            // team
-            if (ImGui.CollapsingHeader("Team Color"))
-            {
-                ImGui.PushItemWidth(-1f);
-                ImGui.ColorPicker4("##teamcolor", ref teamColor, ImGuiColorEditFlags.NoSidePreview);
-            }
-
-            if (ImGui.CollapsingHeader("Enemy Color"))
-            {
-                ImGui.PushItemWidth(-1f);
-                ImGui.ColorPicker4("##enemycolor", ref enemyColor, ImGuiColorEditFlags.NoSidePreview);
-            }
-
-            if (ImGui.CollapsingHeader("Bone Color"))
-            {
-                ImGui.PushItemWidth(-1f);
-                ImGui.ColorPicker4("##bonecolor", ref boneColor, ImGuiColorEditFlags.NoSidePreview);
-            }
+            ImGui.Spacing();
+            ImGui.Separator();
 
             DrawOverlay();
             drawList = ImGui.GetWindowDrawList();
@@ -232,17 +276,20 @@ public class Renderer : Overlay
                 // if entity is on screen, render esp accordingly
                 if (IsEntityOnScreen(entity))
                 {
+                    // draw health bar
+                    if (drawHealth) DrawHealth(entity);
+
                     // draw skeleton
                     if (drawBones) DrawBones(entity);
+
+                    // draw joints
+                    if (drawJoints) DrawJoints(entity);
 
                     // draw line
                     if (drawLines) DrawLine(entity);
 
                     // draw rectangle
                     if (drawRectangles) DrawRecangle(entity);
-
-                    // draw health bar
-                    if (drawHealth) DrawHealth(entity);
                 }
             }
             ImGui.PopStyleColor(3);
@@ -265,6 +312,7 @@ public class Renderer : Overlay
         ImGui.PushStyleColor(ImGuiCol.SliderGrabActive, accentColor); // Active slider handle color
         ImGui.PushStyleColor(ImGuiCol.FrameBg, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // Slider background 
     }
+
     private void RenderFovAimbot()
     {
         // if fov aimbot is enabled, show fov settings
@@ -298,6 +346,7 @@ public class Renderer : Overlay
             ImGui.End();
         }
     }
+
     private void RenderAimboRadioButtons()
     {
         // radio buttons to toggle between fov aimbot and aimbot
@@ -373,6 +422,14 @@ public class Renderer : Overlay
         drawList.AddCircle(entity.bones2d[2], currentBoneThickness + 3, uintColor);
     }
 
+    private void DrawJoints(Entity entity)
+    {
+        foreach (Vector2 joints in entity.bones2d)
+        {
+            drawList.AddCircleFilled(joints, joinRadius, ImGui.ColorConvertFloat4ToU32(jointColor));
+        }
+    }
+
     private void DrawLine(Entity entity)
     {
         Vector4 lineColor = localPlayer.team == entity.team ? teamColor : enemyColor; // set color based on team
@@ -419,6 +476,7 @@ public class Renderer : Overlay
 
         drawList.AddRectFilled(barTop, barBottom, ImGui.ColorConvertFloat4ToU32(barColor));
     }
+
     private bool IsEntityOnScreen(Entity entity)
     {
         if (entity.position2d.X > 0 && entity.position2d.X < screenSize.X && entity.position2d.Y > 0 && entity.position2d.Y < screenSize.Y)
@@ -442,7 +500,6 @@ public class Renderer : Overlay
     }
 
     // ------------------ ImGui Functions ------------------ //
-
     private void DrawOverlay()
     {
         ImGui.Begin("overlay", ImGuiWindowFlags.NoDecoration
