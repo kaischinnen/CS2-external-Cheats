@@ -59,4 +59,37 @@ public static class Calculate
     {
         return start + (end - start) * t;
     }
+
+    // read bones from entity
+    public static List<Vector3> ReadBones(IntPtr boneAddress, Swed swed)
+    {
+        byte[] boneBytes = swed.ReadBytes(boneAddress, 27 * 32 + 16); // get max, 27 = id, 32 = step, 16 = size of matrix
+        List<Vector3> bones = new List<Vector3>();
+
+        // loop through all the bones 
+        foreach (var boneId in Enum.GetValues(typeof(BoneIds)))
+        {
+            float x = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 0); // float = 4 bytes
+            float y = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 4);
+            float z = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 8);
+
+            // add bone to list
+            Vector3 currentBone = new Vector3(x, y, z);
+            bones.Add(currentBone);
+        }
+        return bones;
+    }
+
+    // read bones from entity and convert them to 2d
+    public static List<Vector2> ReadBones2d(List<Vector3> bones, ViewMatrix viewMatrix, Vector2 screenSize)
+    {
+        List<Vector2> bones2d = new List<Vector2>();
+        foreach (Vector3 bone in bones)
+        {
+            Vector2 bone2d = WorldToScreen(viewMatrix, bone, (int)screenSize.X, (int)screenSize.Y);
+            bones2d.Add(bone2d);
+        }
+        return bones2d;
+    }
+
 }

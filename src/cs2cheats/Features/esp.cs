@@ -48,23 +48,27 @@ class EspC
                 IntPtr sceneNode = swed.ReadPointer(currentPawn, Offsets.m_pGameSceneNode);
                 IntPtr boneMatrix = swed.ReadPointer(sceneNode, Offsets.m_modelState + 0x80);
 
-                ViewMatrix viewMatrix = Reader.ReadMatrix(swed, client + Offsets.dwViewMatrix);
-
                 int team = swed.ReadInt(currentPawn, Offsets.m_iTeamNum);   
                 int lifeState = swed.ReadInt(currentPawn, Offsets.m_lifeState);
 
                 if (lifeState != 256) continue;
 
+                // array of 16 floats representing the view matrix
+                ViewMatrix viewMatrix = Reader.ReadMatrix(swed, client + Offsets.dwViewMatrix);
+
                 Entity entity = new Entity();
 
+                // update attributes
                 entity.pawnAddress = currentPawn;
                 entity.team = team;
                 entity.origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin);
-                entity.controllerAddress = currentController;
+                entity.position2d = Calculate.WorldToScreen(viewMatrix, entity.origin, (int)renderer.screenSize.X, (int)renderer.screenSize.Y);
                 entity.lifestate = lifeState;
                 entity.distance = Vector3.Distance(entity.origin, localPlayer.origin);
-                entity.bones = reader.ReadBones(boneMatrix);
-                entity.bones2d = reader.ReadBones2d(entity.bones, viewMatrix, renderer.screenSize);
+                entity.bones = Calculate.ReadBones(boneMatrix, swed);
+                entity.bones2d = Calculate.ReadBones2d(entity.bones, viewMatrix, renderer.screenSize);
+                entity.view = swed.ReadVec(currentPawn, Offsets.m_vecViewOffset); 
+                entity.viewPosition2d = Calculate.WorldToScreen(viewMatrix, Vector3.Add(entity.origin, entity.view), (int)renderer.screenSize.X, (int)renderer.screenSize.Y);
 
                 entities.Add(entity);
 
@@ -79,9 +83,9 @@ class EspC
             }
 
             // fetch over to renderer
-            renderer.entitiesCopy = entities;
-            renderer.localPlayerCopy = localPlayer;
-            Thread.Sleep(3);
+            renderer.UpdateLocalPlayer(localPlayer);
+            renderer.UpdateEntities(entities);
+            Thread.Sleep(1);
         }
     }
 }

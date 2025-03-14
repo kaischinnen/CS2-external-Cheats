@@ -1,6 +1,7 @@
 using ClickableTransparentOverlay;
 using CS2Cheats.Utils;
 using ImGuiNET;
+using System.Collections.Concurrent;
 using System.Numerics;
 
 public class Renderer : Overlay
@@ -27,8 +28,9 @@ public class Renderer : Overlay
     public float circleThickness = 1.5f;
 
     // esp information
-    public List<Entity> entitiesCopy = new List<Entity>();
-    public Entity localPlayerCopy = new Entity();
+    public ConcurrentQueue<Entity> entities = new ConcurrentQueue<Entity>(); // thread safe queue
+    public Entity localPlayer = new Entity();
+    public readonly object entityLock = new object(); // lock for entities 
     ImDrawListPtr drawList;
     Vector4 teamColor = new Vector4(0, 1, 0, 1); // green
     Vector4 enemyColor = new Vector4(1, 0, 0, 1);  // red
@@ -58,7 +60,7 @@ public class Renderer : Overlay
     public bool isWaitingForHotkey = false;
 
     protected override void Render()
-    {   
+    {
         // set window pos
         ImGui.SetNextWindowPos(new Vector2(320, 40), ImGuiCond.FirstUseEver); // (320,40) is right next to radar on 19020x1080. FirstUseEver sets position only the first time the window is drawn, allowing it to be moved afterwards
 
@@ -67,7 +69,7 @@ public class Renderer : Overlay
         float minSWidth = titleSize.X + 50; // minimum width
         float extraWidth = smoothAimbot ? 120 : 0; // add extra width if smooth aimbot is enabled (because slider is wider than minSWidth)
 
-
+        // have small window opened if none of fovaimbot not esp are enabled as these take up more space
         if (!fovAimbot && !esp)
         {
             ImGui.SetNextWindowSize(new Vector2(minSWidth + extraWidth, 0));
@@ -76,6 +78,43 @@ public class Renderer : Overlay
         // title bar
         ImGui.Begin("CS2 Cheat Settings", ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
 
+        // render hotkey button(s)
+        RenderHotkey();
+
+        // checkboxes
+        ImGui.Checkbox("AntiFlash", ref antiFlash);
+        ImGui.Checkbox("Radar Hack", ref radar);
+        ImGui.Checkbox("Bhop", ref bhop);
+        ImGui.Checkbox("Triggerbot", ref triggerbot);
+        ImGui.Checkbox("Target Teammates", ref aimOnTeam);
+        ImGui.Checkbox("VisablityCheck", ref visablityCheck);
+        ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
+
+        // if smooth aimbot is enabled, show slider
+        if (smoothAimbot)
+        {
+            ImGui.SliderFloat("Smoothness", ref smoothAimbotValue, 1f, 50.0f); // min, max
+        }
+
+        ImGui.Checkbox("Bone ESP", ref esp);
+
+        RenderEsp();
+
+        // render radio buttons for aimbot and fov aimbot (toggle between them)
+        RenderAimboRadioButtons();
+
+        // sets window aesthetics
+        SetWindowAesthetics();
+
+        // render fov aimbot
+        RenderFovAimbot();
+
+        ImGui.End();
+    }
+
+    // ------------------ Render Functions ------------------ // 
+    void RenderHotkey()
+    {
         // hotkey config
         if (ImGui.CollapsingHeader("Change Hotkey"))
         {
@@ -114,32 +153,17 @@ public class Renderer : Overlay
                 }
             }
             else
-            {   
+            {
                 // display current hotkey
                 ImGui.Text("Current Hotkey: " + iKey.ToString());
             }
             ImGui.PopStyleColor(3);
             ImGui.PopStyleVar(3);
         }
+    }
 
-
-        // checkboxes
-        ImGui.Checkbox("AntiFlash", ref antiFlash);
-        ImGui.Checkbox("Radar Hack", ref radar);
-        ImGui.Checkbox("Bhop", ref bhop);
-        ImGui.Checkbox("Triggerbot", ref triggerbot);
-        ImGui.Checkbox("Target Teammates", ref aimOnTeam);
-        ImGui.Checkbox("VisablityCheck", ref visablityCheck);
-        ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
-
-        // if smooth aimbot is enabled, show slider
-        if (smoothAimbot)
-        {
-            ImGui.SliderFloat("Smoothness", ref smoothAimbotValue, 1f, 50.0f); // min, max
-        }
-
-        ImGui.Checkbox("Bone ESP", ref esp);
-
+    void RenderEsp()
+    {
         // if esp is enabled
         if (esp)
         {
@@ -164,61 +188,29 @@ public class Renderer : Overlay
                 ImGui.ColorPicker4("##enemycolor", ref enemyColor, ImGuiColorEditFlags.NoSidePreview);
             }
 
-            // draw overlay and skeleton 
-            DrawOverlay();
-            DrawSkeleton();
+            if (ImGui.CollapsingHeader("Bone Color"))
+            {
+                ImGui.PushItemWidth(-1f);
+                ImGui.ColorPicker4("##bonecolor", ref boneColor, ImGuiColorEditFlags.NoSidePreview);
+            }
 
+            DrawOverlay();
+            drawList = ImGui.GetWindowDrawList();
+
+            foreach (var entity in entities)
+            {
+                if (isEntityOnScreen(entity))
+                {
+                    // draw skeleton 
+                    DrawBones(entity);
+                }
+            }
             ImGui.PopStyleColor(3);
             ImGui.End();
         }
-
-        // radio buttons to toggle between fov aimbot and aimbot
-
-        // if aimbot is enabled
-        if (ImGui.RadioButton("Aimbot", aimbotMode == 0))
-        {
-            // turn on aimbot if it is not already enabled
-            if (aimbotMode != 0)
-            {
-                aimbotMode = 0; 
-                aimbot = true;   
-                fovAimbot = false; 
-                fovAimbotRunning = 0; 
-                aimbotRunning = 1;   
-            }
-            // turn off aimbot if it is already enabled
-            else
-            {
-                aimbotMode = -1; 
-                aimbot = false;  
-                fovAimbot = false; 
-                fovAimbotRunning = 0; 
-                aimbotRunning = 0;    
-            }
-        }
-
-        if (ImGui.RadioButton("FOV Aimbot", aimbotMode == 1))
-        {
-            // turn on fov aimbot if it is not already enabled
-            if (aimbotMode != 1)
-            {
-                aimbotMode = 1; 
-                fovAimbot = true;  
-                aimbot = false;    
-                aimbotRunning = 0;  
-                fovAimbotRunning = 1; 
-            }
-            // turn off fov aimbot if it is already enabled
-            else
-            {
-                aimbotMode = -1; 
-                aimbot = false;   
-                fovAimbot = false; 
-                fovAimbotRunning = 0;
-                aimbotRunning = 0;   
-            }
-        }
-
+    }
+    void SetWindowAesthetics()
+    {
         // set window aesthetics
         ImGui.PushStyleColor(ImGuiCol.WindowBg, windowBgColor); // Set window background color
         ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.5f, 0.1f, 0.1f, 1.0f)); // Highlight title bar
@@ -232,7 +224,9 @@ public class Renderer : Overlay
         ImGui.PushStyleColor(ImGuiCol.SliderGrab, accentColor); // Slider handle color
         ImGui.PushStyleColor(ImGuiCol.SliderGrabActive, accentColor); // Active slider handle color
         ImGui.PushStyleColor(ImGuiCol.FrameBg, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // Slider background 
-
+    }
+    void RenderFovAimbot()
+    {
         // if fov aimbot is enabled, show fov settings
         if (fovAimbot)
         {
@@ -260,55 +254,109 @@ public class Renderer : Overlay
 
             drawList2.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor), segmentCount, (int)circleThickness); // center, radius, color, thickness
             ImGui.PopStyleColor(3);
-            
+
             ImGui.End();
-        } 
-        ImGui.End();
+        }
     }
-
-    // draw skeleton
-    void DrawSkeleton()
+    void RenderAimboRadioButtons()
     {
-        if (entitiesCopy.Count == 0 || entitiesCopy == null) return; // safety check
-        List<Entity> tempEntities = new List<Entity>(entitiesCopy).ToList(); // copy the entities list to avoid concurrency issues
-        Console.WriteLine(tempEntities.Count);
-        Thread.Sleep(100);
+        // radio buttons to toggle between fov aimbot and aimbot
 
-        drawList = ImGui.GetWindowDrawList(); // get the draw list
-
-        foreach (Entity entity in tempEntities)
+        // if aimbot is enabled
+        if (ImGui.RadioButton("Aimbot", aimbotMode == 0))
         {
-            if (entity == null) return;
-
-            // set color based on team
-            uint uintColor = localPlayerCopy.team == entity.team ? ImGui.ColorConvertFloat4ToU32(teamColor) : ImGui.ColorConvertFloat4ToU32(enemyColor);
-
-            if (entity.bones2d[2].X > 0 && entity.bones2d[2].Y > 0 && entity.bones2d[2].X < screenSize.X && entity.bones2d[2].Y < screenSize.Y) // check if head is on screen
+            // turn on aimbot if it is not already enabled
+            if (aimbotMode != 0)
             {
-                float currentBoneThickness = boneThickness / entity.distance; // scale thickness based on distance
+                aimbotMode = 0;
+                aimbot = true;
+                fovAimbot = false;
+                fovAimbotRunning = 0;
+                aimbotRunning = 1;
+            }
+            // turn off aimbot if it is already enabled
+            else
+            {
+                aimbotMode = -1;
+                aimbot = false;
+                fovAimbot = false;
+                fovAimbotRunning = 0;
+                aimbotRunning = 0;
+            }
+        }
 
-                // draw lines beween bones
-                drawList.AddLine(entity.bones2d[1], entity.bones2d[2], uintColor, currentBoneThickness); // neck to head
-                drawList.AddLine(entity.bones2d[1], entity.bones2d[3], uintColor, currentBoneThickness); // neck to shoulderLeft
-                drawList.AddLine(entity.bones2d[1], entity.bones2d[6], uintColor, currentBoneThickness); // neck to shoulderRight
-                drawList.AddLine(entity.bones2d[3], entity.bones2d[4], uintColor, currentBoneThickness); // shoulderLeft to armLeft
-                drawList.AddLine(entity.bones2d[6], entity.bones2d[7], uintColor, currentBoneThickness); // shoulderRight to armRight
-                drawList.AddLine(entity.bones2d[4], entity.bones2d[5], uintColor, currentBoneThickness); // armLeft to handLeft
-                drawList.AddLine(entity.bones2d[7], entity.bones2d[8], uintColor, currentBoneThickness); // armRight to handRight
-                drawList.AddLine(entity.bones2d[1], entity.bones2d[0], uintColor, currentBoneThickness); // neck to waist
-                drawList.AddLine(entity.bones2d[0], entity.bones2d[9], uintColor, currentBoneThickness); // waist to kneeLeft
-                drawList.AddLine(entity.bones2d[0], entity.bones2d[11], uintColor, currentBoneThickness); // waist to kneeRight
-                drawList.AddLine(entity.bones2d[9], entity.bones2d[10], uintColor, currentBoneThickness); // kneeLeft to feetLeft
-                drawList.AddLine(entity.bones2d[11], entity.bones2d[12], uintColor, currentBoneThickness); // kneeLeft to feetLeft
-
-                // draw circle on head
-                drawList.AddCircle(entity.bones2d[2], currentBoneThickness, uintColor); 
-
+        if (ImGui.RadioButton("FOV Aimbot", aimbotMode == 1))
+        {
+            // turn on fov aimbot if it is not already enabled
+            if (aimbotMode != 1)
+            {
+                aimbotMode = 1;
+                fovAimbot = true;
+                aimbot = false;
+                aimbotRunning = 0;
+                fovAimbotRunning = 1;
+            }
+            // turn off fov aimbot if it is already enabled
+            else
+            {
+                aimbotMode = -1;
+                aimbot = false;
+                fovAimbot = false;
+                fovAimbotRunning = 0;
+                aimbotRunning = 0;
             }
         }
     }
 
-    // draw Overlay 
+    // ------------------ ESP Functions ------------------ //
+    void DrawBones(Entity entity)
+    {
+        uint uintColor = ImGui.ColorConvertFloat4ToU32(boneColor);
+
+        float currentBoneThickness = boneThickness / entity.distance; // scale thickness based on distance
+
+        // draw lines beween bones
+        drawList.AddLine(entity.bones2d[1], entity.bones2d[2], uintColor, currentBoneThickness); // neck to head
+        drawList.AddLine(entity.bones2d[1], entity.bones2d[3], uintColor, currentBoneThickness); // neck to shoulderLeft
+        drawList.AddLine(entity.bones2d[1], entity.bones2d[6], uintColor, currentBoneThickness); // neck to shoulderRight
+        drawList.AddLine(entity.bones2d[3], entity.bones2d[4], uintColor, currentBoneThickness); // shoulderLeft to armLeft
+        drawList.AddLine(entity.bones2d[6], entity.bones2d[7], uintColor, currentBoneThickness); // shoulderRight to armRight
+        drawList.AddLine(entity.bones2d[4], entity.bones2d[5], uintColor, currentBoneThickness); // armLeft to handLeft
+        drawList.AddLine(entity.bones2d[7], entity.bones2d[8], uintColor, currentBoneThickness); // armRight to handRight
+        drawList.AddLine(entity.bones2d[1], entity.bones2d[0], uintColor, currentBoneThickness); // neck to waist
+        drawList.AddLine(entity.bones2d[0], entity.bones2d[9], uintColor, currentBoneThickness); // waist to kneeLeft
+        drawList.AddLine(entity.bones2d[0], entity.bones2d[11], uintColor, currentBoneThickness); // waist to kneeRight
+        drawList.AddLine(entity.bones2d[9], entity.bones2d[10], uintColor, currentBoneThickness); // kneeLeft to feetLeft
+        drawList.AddLine(entity.bones2d[11], entity.bones2d[12], uintColor, currentBoneThickness); // kneeLeft to feetLeft
+
+        // draw circle on head
+        drawList.AddCircle(entity.bones2d[2], currentBoneThickness + 3, uintColor);
+    }
+
+    bool isEntityOnScreen(Entity entity)
+    {
+        if (entity.position2d.X > 0 && entity.position2d.X < screenSize.X && entity.position2d.Y > 0 && entity.position2d.Y < screenSize.Y)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public void UpdateEntities(IEnumerable<Entity> newEntities) // update entity queue
+    {
+        entities = new ConcurrentQueue<Entity>(newEntities);
+    } 
+
+    public void UpdateLocalPlayer(Entity newEntity)
+    {
+        lock (entityLock)
+        {
+            localPlayer = newEntity;
+        }
+    }
+
+    // ------------------ ImGui Functions ------------------ //
+
     void DrawOverlay()
     {
         ImGui.Begin("overlay", ImGuiWindowFlags.NoDecoration
@@ -322,7 +370,7 @@ public class Renderer : Overlay
             );
     }
 
-    // mapping ImGuiKey to Virtual Key Codes (ref: https://learn.microsoft.com/de-de/windows/win32/inputdev/virtual-key-codes)
+    // mapping ImGuiKey to Virtual Key Codes (see: https://learn.microsoft.com/de-de/windows/win32/inputdev/virtual-key-codes)
     public static int ImGuiKeyToVkey(ImGuiKey key)
     {
         switch (key)

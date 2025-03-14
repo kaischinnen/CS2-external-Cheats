@@ -7,13 +7,13 @@ namespace CS2Cheats
     class Cheats
     {  
         // cancellation token sources for each task
-        private static CancellationTokenSource _antiFlashCTS;
-        private static CancellationTokenSource _radarCTS;
-        private static CancellationTokenSource _bhopCTS;
-        private static CancellationTokenSource _triggerbotCTS;
-        private static CancellationTokenSource _aimbotCTS;
-        private static CancellationTokenSource _fovAimbotCTS;
-        private static CancellationTokenSource _espCTS;
+        private static CancellationTokenSource? _antiFlashCTS;
+        private static CancellationTokenSource? _radarCTS;
+        private static CancellationTokenSource? _bhopCTS;
+        private static CancellationTokenSource? _triggerbotCTS;
+        private static CancellationTokenSource? _aimbotCTS;
+        private static CancellationTokenSource? _fovAimbotCTS;
+        private static CancellationTokenSource? _espCTS;
 
         public static async Task initOffsets()
         {
@@ -31,6 +31,7 @@ namespace CS2Cheats
             {
                 swed = new Swed("cs2");
             } catch (Exception e) {
+                Console.WriteLine($"Error: {e.Message}");
                 Console.WriteLine("CS2 process is not running!");
                 return;
             }
@@ -49,7 +50,7 @@ namespace CS2Cheats
             // main loop
             while (true)
             {
-                // initialization of other cheats
+                // initialization of cheats
 
                 // antiFlash
                 // if antiFlash checkbox was turned on for the very first time, meaning the task is not running(cts is null) but the checkbox is on, so we wanna start the task (this is only being executed once).
