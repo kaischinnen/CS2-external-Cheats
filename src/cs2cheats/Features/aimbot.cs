@@ -170,8 +170,7 @@ class AimbotC
                     Vector3 delta = newAnglesVec3 - currentAngles;
 
                     // normalize angles so we get the shortest path 
-                    delta.X = (Calculate.NormalizeAngles(delta.X, delta.Y)).X;
-                    delta.Y = (Calculate.NormalizeAngles(delta.X, delta.Y)).Y;
+                    delta = Calculate.NormalizeAngles(delta);
 
                     float smoothingFactor = 1.0f / renderer.smoothAimbotValue; // convert smoothing to lerp factor t
 

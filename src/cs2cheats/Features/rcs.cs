@@ -72,8 +72,7 @@ class RcsC
                 Console.WriteLine(iShotsFired);
 
                 // normalize angles
-                newAngle.X = (Calculate.NormalizeAngles(newAngle.X, newAngle.Y)).X;
-                newAngle.Y = (Calculate.NormalizeAngles(newAngle.X, newAngle.Y)).Y;
+                newAngle = Calculate.NormalizeAngles(newAngle);
 
                 // force new angle
                 swed.WriteVec(client + Offsets.dwViewAngles, newAngle);

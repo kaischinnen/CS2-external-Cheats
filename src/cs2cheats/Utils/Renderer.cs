@@ -122,7 +122,7 @@ public class Renderer : Overlay
             ImGui.SliderFloat("Smoothness", ref smoothAimbotValue, 1f, 50.0f); // min, max
         }
 
-        ImGui.Checkbox("Bone ESP", ref esp);
+        ImGui.Checkbox("ESP", ref esp);
 
         RenderEsp();
 
@@ -276,7 +276,7 @@ public class Renderer : Overlay
 
             foreach (var entity in entities)
             {
-                // if entity is on screen, render esp accordingly
+                // if entity is on screen, and entities are on server
                 if (IsEntityOnScreen(entity))
                 {
                     // draw health bar
@@ -321,8 +321,8 @@ public class Renderer : Overlay
         // if fov aimbot is enabled, show fov settings
         if (fovAimbot)
         {
-            ImGui.SliderFloat("FOV (Pixels)", ref FOV, 10, 300); // min, max
-            ImGui.SliderFloat("FOV Circle Thickness", ref circleThickness, 0.5f, 8.0f); // adjust thickness
+            ImGui.SliderFloat("FOV", ref FOV, 10, 300); // min, max
+            ImGui.SliderFloat("Circle Thickness", ref circleThickness, 0.5f, 8.0f); // adjust thickness
 
             // set the header background color
             ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
@@ -503,7 +503,7 @@ public class Renderer : Overlay
     }
 
     // ------------------ ImGui Functions ------------------ //
-    private void DrawOverlay()
+    private static void DrawOverlay()
     {
         ImGui.Begin("overlay", ImGuiWindowFlags.NoDecoration
             | ImGuiWindowFlags.NoBackground
