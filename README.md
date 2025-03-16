@@ -7,6 +7,10 @@
 >
 > Radar
 >
+> (Bone) ESP
+>
+> RCS
+>
 > Bhop
 >
 > Triggerbot
@@ -24,10 +28,10 @@ and more!
 2. Start CS2 with "-insecure" parameter which disallows any you of joining VAC-Secured Servers and therefore taking the risk of VAC ever detecting external Cheatware resuling in a ban.
 
 ## Offsets
-Offsets are being automatically updated. Credits to [a2x/cs2-dumper][ax2-link]. 
+Offsets are being automatically updated. Credits to [a2x/cs2-dumper][ax2-link] for providing updated Offsets. 
 
 ## Getting started 
-Download this Repository by forking it or downloading and unpacking the ZIP file. 
+Download this Repository by cloning it or downloading and unpacking the ZIP file. 
 
 ## Usage
 Ensure the game process is running (being in the main menu will suffice).
