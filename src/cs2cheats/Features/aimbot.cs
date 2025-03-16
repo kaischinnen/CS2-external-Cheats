@@ -169,14 +169,9 @@ class AimbotC
                     // calc the difference between new and current angles
                     Vector3 delta = newAnglesVec3 - currentAngles;
 
-                    // get shortest path for delta (example: we wanna turn 350 degrees, but it's shorter to turn -10 degrees)
-                    // delta + 180 to make sure all angles are postive
-                    // % 360 to ensure delta <= 360
-                    // + 360 to ensure delta >= 0
-                    // % 360 to ensure delta <= 360
-                    // shift angle back into [-180, 180]
-                    delta.X = ((delta.X + 180) % 360 + 360) % 360 - 180;
-                    delta.Y = ((delta.Y + 180) % 360 + 360) % 360 - 180;
+                    // normalize angles so we get the shortest path 
+                    delta.X = (Calculate.NormalizeAngles(delta.X, delta.Y)).X;
+                    delta.Y = (Calculate.NormalizeAngles(delta.X, delta.Y)).Y;
 
                     float smoothingFactor = 1.0f / renderer.smoothAimbotValue; // convert smoothing to lerp factor t
 

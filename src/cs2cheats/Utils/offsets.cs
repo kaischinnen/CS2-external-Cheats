@@ -29,6 +29,8 @@ public class Offsets
     public static int m_bSpotted;
     public static int m_entitySpottedState;
     public static int m_iIDEntIndex;
+    public static int m_iShotsFired;
+    public static int m_aimPunchAngle;
 
     // button.cs
     public static int jump;
@@ -75,6 +77,9 @@ public class Offsets
             destData.m_bSpotted = sourceDataClient.clientdll.classes.EntitySpottedState_t.fields.m_bSpotted;
             destData.m_entitySpottedState = sourceDataClient.clientdll.classes.C_CSPlayerPawn.fields.m_entitySpottedState;
             destData.m_iIDEntIndex = sourceDataClient.clientdll.classes.C_CSPlayerPawnBase.fields.m_iIDEntIndex;
+            destData.m_iShotsFired = sourceDataClient.clientdll.classes.C_CSPlayerPawn.fields.m_iShotsFired;
+            destData.m_aimPunchAngle = sourceDataClient.clientdll.classes.C_CSPlayerPawn.fields.m_aimPunchAngle;
+
 
             // buttons
             destData.jump = sourceDataButtons.clientdll.jump;
@@ -91,6 +96,7 @@ public class Offsets
     {
         dwViewAngles = data.dwViewAngles;
         dwLocalPlayerPawn = data.dwLocalPlayerPawn;
+
         dwEntityList = data.dwEntityList;
         dwViewMatrix = data.dwViewMatrix;
         m_hPlayerPawn = data.m_hPlayerPawn;
@@ -106,6 +112,9 @@ public class Offsets
         m_bSpotted = data.m_bSpotted;
         m_entitySpottedState = data.m_entitySpottedState;
         m_iIDEntIndex = data.m_iIDEntIndex;
+        m_iShotsFired = data.m_iShotsFired;
+        m_aimPunchAngle = data.m_aimPunchAngle;
+
         jump = data.jump;
         attack = data.attack;;   
     }

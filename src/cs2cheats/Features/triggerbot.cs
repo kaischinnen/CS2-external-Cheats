@@ -47,7 +47,7 @@ class TriggerbotC
             int targetHealth = swed.ReadInt(targetEntity, Offsets.m_iHealth);
 
             // if target is enemy and alive
-            if (targetTeam == localPlayer.team && targetLifeState != 256)
+            if (targetTeam != localPlayer.team && targetLifeState == 256)
             {
                 if (GetAsyncKeyState(renderer.hotkey) < 0)
                 {

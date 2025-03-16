@@ -14,6 +14,7 @@ public class Renderer : Overlay
     public bool fovAimbot = false;
     public bool aimOnTeam = false;
     public bool antiFlash = false;
+    public bool rcs = false;
     public bool radar = false;
     public bool bhop = false;
     public bool triggerbot = false;
@@ -27,7 +28,7 @@ public class Renderer : Overlay
     public bool drawHealth = true;
 
     // initial smooth aimbot value  
-    public float smoothAimbotValue = 1.0f; 
+    public float smoothAimbotValue = 1.0f;
 
     // fov information 
     public Vector2 screenSize = new Vector2(1920, 1080);
@@ -38,7 +39,7 @@ public class Renderer : Overlay
     // esp information
 
     // entity queue and objects (thread safe)
-    public ConcurrentQueue<Entity> entities = new ConcurrentQueue<Entity>(); 
+    public ConcurrentQueue<Entity> entities = new ConcurrentQueue<Entity>();
     public Entity localPlayer = new Entity();
     public readonly object entityLock = new object(); // lock for entities 
     ImDrawListPtr drawList;
@@ -57,6 +58,7 @@ public class Renderer : Overlay
 
     // toggle variables, indicating whether the task for the feature is running or not.
     public int antiFlashRunning = 0;
+    public int rcsRunning = 0;
     public int radarRunning = 0;
     public int bhopRunning = 0;
     public int triggerbotRunning = 0;
@@ -99,13 +101,14 @@ public class Renderer : Overlay
         if (!isWindowOpen)
         {
             Environment.Exit(0);
-        } 
+        }
 
         // render hotkey button(s)
         RenderHotkey();
 
         // checkboxes
         ImGui.Checkbox("AntiFlash", ref antiFlash);
+        ImGui.Checkbox("RCS", ref rcs);
         ImGui.Checkbox("Radar Hack", ref radar);
         ImGui.Checkbox("Bhop", ref bhop);
         ImGui.Checkbox("Triggerbot", ref triggerbot);
@@ -399,7 +402,7 @@ public class Renderer : Overlay
 
     // ------------------ ESP Functions ------------------ //
     private void DrawBones(Entity entity)
-    {   
+    {
         uint uintColor = ImGui.ColorConvertFloat4ToU32(boneColor);
 
         float currentBoneThickness = boneThickness / entity.distance; // scale thickness based on distance
@@ -435,13 +438,13 @@ public class Renderer : Overlay
         Vector4 lineColor = localPlayer.team == entity.team ? teamColor : enemyColor; // set color based on team
 
         // draw line from the bottom mid of the screen to the entity
-        drawList.AddLine(new Vector2(screenSize.X / 2, screenSize.Y), entity.position2d, ImGui.ColorConvertFloat4ToU32(lineColor), lineThickness); 
+        drawList.AddLine(new Vector2(screenSize.X / 2, screenSize.Y), entity.position2d, ImGui.ColorConvertFloat4ToU32(lineColor), lineThickness);
     }
 
     private void DrawRecangle(Entity entity)
     {
         // set color based on team
-        Vector4 rectColor = localPlayer.team == entity.team ? teamColor : enemyColor; 
+        Vector4 rectColor = localPlayer.team == entity.team ? teamColor : enemyColor;
 
         // height = head2d - feet2d
         float entityHeight = entity.viewPosition2d.Y - entity.position2d.Y;
@@ -489,7 +492,7 @@ public class Renderer : Overlay
     public void UpdateEntities(IEnumerable<Entity> newEntities) // update entity queue
     {
         entities = new ConcurrentQueue<Entity>(newEntities);
-    } 
+    }
 
     public void UpdateLocalPlayer(Entity newEntity)
     {
@@ -517,7 +520,7 @@ public class Renderer : Overlay
     private static int ImGuiKeyToVkey(ImGuiKey key)
     {
         switch (key)
-        {   
+        {
             // keyboard buttons
             case ImGuiKey.Tab: return 0x09;  // VK_TAB
             case ImGuiKey.LeftArrow: return 0x25;  // VK_LEFT

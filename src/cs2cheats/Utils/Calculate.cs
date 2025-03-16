@@ -93,4 +93,14 @@ public static class Calculate
         return bones2d;
     }
 
+    public static Vector2 NormalizeAngles(float X, float Y)
+    {
+        while (Y < -180) Y += 360;
+        while (Y > 180) Y -= 360;
+        if (X > 89) X = 89;
+        if (X < -89) X = -89;
+
+        return new Vector2(X, Y);
+    }   
+
 }
