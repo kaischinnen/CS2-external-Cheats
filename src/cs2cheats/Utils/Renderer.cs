@@ -22,7 +22,7 @@ public class Renderer : Overlay
     public bool smoothAimbot = false;
     public bool visablityCheck = false;
     public bool esp = false;
-    public bool draw2dEsp = false;
+    public bool draw2dEsp = true;
     public bool draw3dEsp = false;
     public bool drawBones = true;
     public bool drawJoints = true;
@@ -73,7 +73,7 @@ public class Renderer : Overlay
 
     // aimbot mode for toggling between aimbot and fov aimbot
     public int aimbotMode = -1; // -1 = OFF, 0 = aimbot, 1 = fov aimbot
-    public int espMode = -1; // -1 = OFF, 0 = 2D, 1 = 3D
+    public int espMode = 0; // -1 = OFF, 0 = 2D, 1 = 3D
 
     // window aesthetics
     public Vector4 windowBgColor = new Vector4(0.1f, 0.1f, 0.1f, 0.85f); // dark-ish semi-transparent window
@@ -199,10 +199,6 @@ public class Renderer : Overlay
         // if esp is enabled
         if (esp)
         {
-            drawRectangles = true; // enable rectangles by default
-            draw2dEsp = true; // enable 2d rectangles by default
-            espMode = 0; 
-
             ImGui.Separator();
             ImGui.Spacing();
             ImGui.Separator();
@@ -430,7 +426,7 @@ public class Renderer : Overlay
 
         if (ImGui.RadioButton("Draw 3D Rectangles", espMode == 1))
         {
-            // turn on fov aimbot if it is not already enabled
+            // turn on 3d if it is not already enabled
             if (espMode != 1)
             {
                 espMode = 1;
@@ -439,7 +435,7 @@ public class Renderer : Overlay
                 esp2dRunning = 0;
                 esp3dRunning = 1;
             }
-            // turn off fov aimbot if it is already enabled
+            // turn off 3d if it is already enabled
             else
             {
                 espMode = -1;
@@ -447,7 +443,6 @@ public class Renderer : Overlay
                 draw3dEsp = false;
                 esp3dRunning = 0;
                 esp2dRunning = 0;
-                drawRectangles = false; // turn off rectangle options if neither 2d nor 3d is on
             }
         }
     }
@@ -515,58 +510,56 @@ public class Renderer : Overlay
 
         float entityHeight = entity.position2d.Y - entity.viewPosition2d.Y;
 
-    
-            float h = entity.head.Z - entity.origin.Z;
-            float w = h / 2.5f;
+        // height and width (Z Val)
+        float h = entity.head.Z - entity.origin.Z;
+        float w = h / 2.5f;
 
-            float cx = (entity.head.X + entity.origin.X) / 2;
-            float cy = (entity.head.Y + entity.origin.Y) / 2;
-            float cz = (entity.head.Z + entity.origin.Z) / 2;
+        // center of entity
+        float cx = (entity.head.X + entity.origin.X) / 2;
+        float cy = (entity.head.Y + entity.origin.Y) / 2;
+        float cz = (entity.head.Z + entity.origin.Z) / 2;
 
-            Vector3[] vertices = 
-            {
-                new Vector3(cx - w / 2, cy - w / 2, cz - h / 2),
-                new Vector3(cx + w / 2, cy - w / 2, cz - h / 2),
-                new Vector3(cx + w / 2, cy + w / 2, cz - h / 2),
-                new Vector3(cx - w / 2, cy + w / 2, cz - h / 2),
+        // bounding box vertices
+        Vector3[] vertices = 
+        {
+            // bottom 
+            new Vector3(cx - w / 2, cy - w / 2, cz - h / 2),
+            new Vector3(cx + w / 2, cy - w / 2, cz - h / 2),
+            new Vector3(cx + w / 2, cy + w / 2, cz - h / 2),
+            new Vector3(cx - w / 2, cy + w / 2, cz - h / 2),
 
-                new Vector3(cx - w / 2, cy - w / 2, cz + h / 2),
-                new Vector3(cx + w / 2, cy - w / 2, cz + h / 2),
-                new Vector3(cx + w / 2, cy + w / 2, cz + h / 2),
-                new Vector3(cx - w / 2, cy + w / 2, cz + h / 2)
-            };
+            // top
+            new Vector3(cx - w / 2, cy - w / 2, cz + h / 2),
+            new Vector3(cx + w / 2, cy - w / 2, cz + h / 2),
+            new Vector3(cx + w / 2, cy + w / 2, cz + h / 2),
+            new Vector3(cx - w / 2, cy + w / 2, cz + h / 2)
+        };
 
-            Vector2[] screenCoords3DParts = new Vector2[8];
+        Vector2[] screenCoords3DParts = new Vector2[8];
 
-            for (int i = 0; i < 8; i++)
-            {
-                screenCoords3DParts[i] = Calculate.WorldToScreen(entity.viewMatrix, vertices[i], (int)screenSize.X, (int)screenSize.Y);
-            }
+        // convert vertex onto 2D
+        for (int i = 0; i < 8; i++)
+        {
+            screenCoords3DParts[i] = Calculate.WorldToScreen(entity.viewMatrix, vertices[i], (int)screenSize.X, (int)screenSize.Y);
+        }
 
-            // down
-            drawList.AddLine(screenCoords3DParts[0], screenCoords3DParts[1], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[1], screenCoords3DParts[2], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[2], screenCoords3DParts[3], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[3], screenCoords3DParts[0], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        // bottom
+        drawList.AddLine(screenCoords3DParts[0], screenCoords3DParts[1], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[1], screenCoords3DParts[2], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[2], screenCoords3DParts[3], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[3], screenCoords3DParts[0], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
 
-            // up
-            drawList.AddLine(screenCoords3DParts[4], screenCoords3DParts[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[5], screenCoords3DParts[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[6], screenCoords3DParts[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[7], screenCoords3DParts[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        // top
+        drawList.AddLine(screenCoords3DParts[4], screenCoords3DParts[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[5], screenCoords3DParts[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[6], screenCoords3DParts[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[7], screenCoords3DParts[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
 
-            Vector2[] templines = {
-                screenCoords3DParts[4] - screenCoords3DParts[0],
-                screenCoords3DParts[5] - screenCoords3DParts[1],
-                screenCoords3DParts[6] - screenCoords3DParts[2],
-                screenCoords3DParts[7] - screenCoords3DParts[3]
-            };
-
-            // central
-            drawList.AddLine(screenCoords3DParts[0], screenCoords3DParts[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[1], screenCoords3DParts[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[2], screenCoords3DParts[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-            drawList.AddLine(screenCoords3DParts[3], screenCoords3DParts[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        // central
+        drawList.AddLine(screenCoords3DParts[0], screenCoords3DParts[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[1], screenCoords3DParts[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[2], screenCoords3DParts[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        drawList.AddLine(screenCoords3DParts[3], screenCoords3DParts[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
     }
 
     private void DrawHealth(Entity entity)
@@ -606,7 +599,6 @@ public class Renderer : Overlay
 
         drawList.AddRectFilled(barTop, barBottom, ImGui.ColorConvertFloat4ToU32(barColor));
     }
-
 
     private bool IsEntityOnScreen(Entity entity)
     {
