@@ -199,6 +199,10 @@ public class Renderer : Overlay
         // if esp is enabled
         if (esp)
         {
+            drawRectangles = true; // enable rectangles by default
+            draw2dEsp = true; // enable 2d rectangles by default
+            espMode = 0; 
+
             ImGui.Separator();
             ImGui.Spacing();
             ImGui.Separator();
@@ -424,7 +428,7 @@ public class Renderer : Overlay
             }
         }
 
-        if (ImGui.RadioButton("Draw 3D Rectangles", aimbotMode == 1))
+        if (ImGui.RadioButton("Draw 3D Rectangles", espMode == 1))
         {
             // turn on fov aimbot if it is not already enabled
             if (espMode != 1)
@@ -580,10 +584,29 @@ public class Renderer : Overlay
         Vector2 barTop = new Vector2(boxLeft - barPixelWidth, entity.position2d.Y - barHeight);
         Vector2 barBottom = new Vector2(boxLeft, entity.position2d.Y);
 
-        Vector4 barColor = new Vector4(0, 1, 0, 1);
+        Vector4 green = new Vector4(0, 1, 0, 1);
+        Vector4 orange = new Vector4(1, 0.5f, 0, 1);
+        Vector4 red = new Vector4(0.6f, 0, 0, 1);
+
+        Vector4 barColor;
+
+        // set color based on health
+        // if health is above 50%, interpolate between green and orange
+        if (entity.health > 50)
+        {
+            float t = (entity.health - 50) / 50f; 
+            barColor = Vector4.Lerp(orange, green, t);
+        }
+        else
+        {
+            // if health is below 50%, interpolate between orange and red
+            float t = entity.health / 50f; 
+            barColor = Vector4.Lerp(red, orange, t);
+        }
 
         drawList.AddRectFilled(barTop, barBottom, ImGui.ColorConvertFloat4ToU32(barColor));
     }
+
 
     private bool IsEntityOnScreen(Entity entity)
     {
