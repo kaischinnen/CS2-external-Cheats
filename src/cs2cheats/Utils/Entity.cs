@@ -18,7 +18,9 @@ public class Entity {
     public string name { get; set; } = string.Empty;
     public float pixelDistance { get; set; } // from crosshair
     public List<Vector3>? bones { get; set; } 
-    public List<Vector2>? bones2d { get; set; }}
+    public List<Vector2>? bones2d { get; set; }
+    public ViewMatrix? viewMatrix { get; set; }
+}
 
 public enum BoneIds
 {

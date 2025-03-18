@@ -61,13 +61,15 @@ class EspC
                 entity.team = team; // team
                 entity.lifestate = lifeState; // lifestate
                 entity.origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin); // origin position on map (3d)
-                entity.position2d = Calculate.WorldToScreen(viewMatrix, entity.origin, (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // 2d position 
+                entity.position2d = Calculate.WorldToScreen(viewMatrix, entity.origin, (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // 2d 
                 entity.distance = Vector3.Distance(entity.origin, localPlayer.origin); // distance from entity to localPlayer
                 entity.bones = Calculate.ReadBones(boneMatrix, swed); // list of Vec3 bones
                 entity.bones2d = Calculate.ReadBones2d(entity.bones, viewMatrix, renderer.screenSize); // bones on screen
                 entity.view = swed.ReadVec(currentPawn, Offsets.m_vecViewOffset); // view position
                 entity.viewPosition2d = Calculate.WorldToScreen(viewMatrix, Vector3.Add(entity.origin, entity.view), (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // view position on screen
-                
+                entity.viewMatrix = viewMatrix; // view matrix
+                entity.head = swed.ReadVec(boneMatrix, 6 * 32); // head position
+
                 entities.Add(entity);
 
                 Console.ForegroundColor = ConsoleColor.Green;

@@ -24,9 +24,8 @@ public static class Calculate
     }
 
     // w2s
-    public static Vector2 WorldToScreen(ViewMatrix matrix, Vector3 pos, int width, int height) {
-        Vector2 screenCoordinates = new Vector2();
-
+    public static Vector2 WorldToScreen(ViewMatrix matrix, Vector3 pos, int width, int height) 
+    {
         // get screenWidth
         float screenWidth = (matrix.m41 * pos.X) + (matrix.m42 * pos.Y) + (matrix.m43 * pos.Z + matrix.m44);
 
@@ -41,16 +40,15 @@ public static class Calculate
             float camY = height / 2;
 
             // perspective division
-            float X = camX + (screenX / screenWidth) * camX;
-            float Y = camY - (screenY / screenWidth) * camY;
+            float X = camX + camX * screenX / screenWidth;
+            float Y = camY - camY * screenY / screenWidth;
 
             // return screen coords
-            screenCoordinates = new Vector2(X, Y);
-            return screenCoordinates;
+            return new Vector2(X, Y);
         }
         else
         {
-            return new Vector2(-1, -1);
+            return new Vector2(-99, -99);
         }
     }
 
