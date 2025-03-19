@@ -1,7 +1,6 @@
 using ClickableTransparentOverlay;
 using CS2Cheats.Utils;
 using ImGuiNET;
-using SharpGen.Runtime.Win32;
 using System.Collections.Concurrent;
 using System.Numerics;
 
@@ -29,9 +28,14 @@ public class Renderer : Overlay
     public bool drawLines = true;
     public bool drawRectangles = true;
     public bool drawHealth = true;
+    public bool glow = false;
 
     // initial smooth aimbot value  
     public float smoothAimbotValue = 1.0f;
+
+    // glow color
+    public Vector4 glowColor = new Vector4(1, 0, 0, 1); // red
+    public long glow64 = 0x800000FF;
 
     // fov information 
     public Vector2 screenSize = new Vector2(1920, 1080);
@@ -70,6 +74,7 @@ public class Renderer : Overlay
     public int espRunning = 0;
     public int esp2dRunning = 0;
     public int esp3dRunning = 0;
+    public int glowRunning = 0;
 
     // aimbot mode for toggling between aimbot and fov aimbot
     public int aimbotMode = -1; // -1 = OFF, 0 = aimbot, 1 = fov aimbot
@@ -86,6 +91,7 @@ public class Renderer : Overlay
 
     protected override void Render()
     {
+
         // set window pos
         ImGui.SetNextWindowPos(new Vector2(320, 40), ImGuiCond.FirstUseEver); // (320,40) is right next to radar on 19020x1080. FirstUseEver sets position only the first time the window is drawn, allowing it to be moved afterwards
 
@@ -120,6 +126,22 @@ public class Renderer : Overlay
         ImGui.Checkbox("Triggerbot", ref triggerbot);
         ImGui.Checkbox("Target Teammates", ref aimOnTeam);
         ImGui.Checkbox("Check Visability", ref visablityCheck);
+
+        ImGui.Checkbox("Glow", ref glow);
+        if (glow)
+        {
+            if (ImGui.CollapsingHeader("Glow Color"))
+            {
+                ImGui.PushItemWidth(-1f);
+                ImGui.ColorPicker4("##glowcolor", ref glowColor, ImGuiColorEditFlags.NoSidePreview);
+
+                uint temp = ImGui.ColorConvertFloat4ToU32(glowColor);
+                glow64 = (long)temp;
+
+                ImGui.PopItemWidth();
+            }
+        }
+
         ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
 
         // if smooth aimbot is enabled, show slider

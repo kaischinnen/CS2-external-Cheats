@@ -15,6 +15,7 @@ class Cheats
     private static CancellationTokenSource? _aimbotCTS;
     private static CancellationTokenSource? _fovAimbotCTS;
     private static CancellationTokenSource? _espCTS;
+    private static CancellationTokenSource? _glowCTS;
 
     public static async Task initOffsets()
     {
@@ -253,7 +254,30 @@ class Cheats
                 Task.Run(() => EspC.Esp(renderer, swed, client, _espCTS.Token));
             }
 
-            Thread.Sleep(5);
+            // glow 
+            if (renderer.glow && _glowCTS == null)
+            {
+                _glowCTS = new CancellationTokenSource();
+                Task.Run(() => GlowC.Glow(renderer, swed, client, _glowCTS.Token));
+                renderer.glowRunning = 1;
+            }
+
+            if (!renderer.glow && renderer.glowRunning == 0 || renderer.glow && renderer.glowRunning == 1) { }
+
+            else if (!renderer.glow && _glowCTS != null)
+            {
+                _glowCTS.Cancel();
+                _glowCTS.Dispose();
+                renderer.glowRunning = 0;
+            }
+
+            else if (renderer.glow && _glowCTS != null)
+            {
+                renderer.glowRunning = 1;
+                _glowCTS = new CancellationTokenSource();
+                Task.Run(() => GlowC.Glow(renderer, swed, client, _glowCTS.Token));
+            }
+            //Thread.Sleep(5);
         }
     }
 }

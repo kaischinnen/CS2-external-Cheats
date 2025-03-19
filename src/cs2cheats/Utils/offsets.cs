@@ -31,6 +31,9 @@ public class Offsets
     public static int m_iIDEntIndex;
     public static int m_iShotsFired;
     public static int m_aimPunchAngle;
+    public static int m_Glow;
+    public static int m_glowColorOverride;
+    public static int m_bGlowing;
 
     // button.cs
     public static int jump;
@@ -79,7 +82,9 @@ public class Offsets
             destData.m_iIDEntIndex = sourceDataClient.clientdll.classes.C_CSPlayerPawnBase.fields.m_iIDEntIndex;
             destData.m_iShotsFired = sourceDataClient.clientdll.classes.C_CSPlayerPawn.fields.m_iShotsFired;
             destData.m_aimPunchAngle = sourceDataClient.clientdll.classes.C_CSPlayerPawn.fields.m_aimPunchAngle;
-
+            destData.m_Glow = sourceDataClient.clientdll.classes.C_BaseModelEntity.fields.m_Glow;
+            destData.m_glowColorOverride = sourceDataClient.clientdll.classes.CGlowProperty.fields.m_glowColorOverride;
+            destData.m_bGlowing = sourceDataClient.clientdll.classes.CGlowProperty.fields.m_bGlowing;
 
             // buttons
             destData.jump = sourceDataButtons.clientdll.jump;
@@ -114,6 +119,9 @@ public class Offsets
         m_iIDEntIndex = data.m_iIDEntIndex;
         m_iShotsFired = data.m_iShotsFired;
         m_aimPunchAngle = data.m_aimPunchAngle;
+        m_Glow = data.m_Glow;
+        m_glowColorOverride = data.m_glowColorOverride;
+        m_bGlowing = data.m_bGlowing;
 
         jump = data.jump;
         attack = data.attack;;   
