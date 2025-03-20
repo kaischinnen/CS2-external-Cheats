@@ -68,6 +68,9 @@ public class Renderer : Overlay
     public float alphaValueRect = 0.1f;
     public float alphaValueBorder = 1.0f;
 
+    public Vector2 leftEdgeTop;
+    public Vector2 leftEdgeBottom;
+
     // toggle variables, indicating whether the task for the feature is running or not.
     public int antiFlashRunning = 0;
     public int rcsRunning = 0;
@@ -618,6 +621,11 @@ public class Renderer : Overlay
             screenCoords[i] = Calculate.WorldToScreen(entity.viewMatrix, vertices[i], (int)screenSize.X, (int)screenSize.Y);
         }
 
+        // fetch data over for drawHealth
+        leftEdgeTop = new Vector2(screenCoords[0].X, screenCoords[0].Y);
+        leftEdgeBottom = new Vector2(screenCoords[3].X, screenCoords[3].Y);
+
+
         // draw rectangles
         if (fillColor)
         {
@@ -686,7 +694,14 @@ public class Renderer : Overlay
             barColor = Vector4.Lerp(red, orange, t);
         }
 
-        drawList.AddRectFilled(barTop, barBottom, ImGui.ColorConvertFloat4ToU32(barColor));
+        // adjust position of health bar depending on whether 2d or 3d esp is enabled
+        if (draw3dEsp) 
+        {
+            drawList.AddRectFilled(leftEdgeTop, leftEdgeBottom, ImGui.ColorConvertFloat4ToU32(barColor));
+        }
+        else { 
+            drawList.AddRectFilled(barTop, barBottom, ImGui.ColorConvertFloat4ToU32(barColor));
+        }
     }
 
     private bool IsEntityOnScreen(Entity entity)
