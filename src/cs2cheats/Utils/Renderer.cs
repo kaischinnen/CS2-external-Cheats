@@ -29,6 +29,8 @@ public class Renderer : Overlay
     public bool drawRectangles = true;
     public bool drawHealth = true;
     public bool glow = false;
+    public bool fillColor = false;
+    public bool drawBorders = true;
 
     // initial smooth aimbot value  
     public float smoothAimbotValue = 1.0f;
@@ -56,12 +58,15 @@ public class Renderer : Overlay
     Vector4 enemyColor = new Vector4(1, 0, 0, 1);  // red
     Vector4 boneColor = new Vector4(1, 1, 1, 1); // white
     Vector4 jointColor = new Vector4(255, 0, 210, 1); // purple
+    Vector4 borderColor = new Vector4(0, 0, 0, 1); // black
 
     // esp settings
     public float boneThickness = 4;
     public float joinRadius = 3;
     public float lineThickness = 1.0f;
     public float rectThickness = 1.0f;
+    public float alphaValueRect = 0.1f;
+    public float alphaValueBorder = 1.0f;
 
     // toggle variables, indicating whether the task for the feature is running or not.
     public int antiFlashRunning = 0;
@@ -276,13 +281,40 @@ public class Renderer : Overlay
             ImGui.Checkbox("Draw Rectangles", ref drawRectangles);
             if (drawRectangles)
             {
-                ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
+                ImGui.Separator();
+
                 RenderEspRadioButtons();
+
+                ImGui.Checkbox("Fill Rectangle", ref fillColor);
+
+                // if fill rectangle is enabled, show alpha slider
+                if (fillColor) 
+                { 
+                    ImGui.SliderFloat("Rectangle Alpha", ref alphaValueRect, 0.01f, 0.5f);
+                    
+                    if (drawBorders) ImGui.Separator();
+
+                    ImGui.Checkbox("Draw Borders", ref drawBorders);
+
+                    // if draw borders is enabled, show border alpha slider and color picker
+                    if (drawBorders)
+                    {
+                        ImGui.SliderFloat("Border Alpha", ref alphaValueBorder, 0.01f, 1f);
+                        if (ImGui.CollapsingHeader("Border Color"))
+                        {
+                            ImGui.PushItemWidth(-1f);
+                            ImGui.ColorPicker4("##rectcolor", ref borderColor, ImGuiColorEditFlags.NoSidePreview);
+                            ImGui.PopItemWidth();
+                        }
+                        ImGui.Separator();
+                    }
+                }
             }
 
-            // team
+            // if rectangles or lines are enabled, show color pickers
             if (drawRectangles || drawLines)
             {
+                //team
                 if (ImGui.CollapsingHeader("Team Color"))
                 {
                     ImGui.PushItemWidth(-1f);
@@ -291,6 +323,7 @@ public class Renderer : Overlay
 
                 }
 
+                // enemy
                 if (ImGui.CollapsingHeader("Enemy Color"))
                 {
                     ImGui.PushItemWidth(-1f);
@@ -300,13 +333,18 @@ public class Renderer : Overlay
                 }
             }
 
+            // if fill rectangle is disabled, show thickness slider
+            if (!fillColor) ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
+
             ImGui.Separator();
             ImGui.Spacing();
             ImGui.Separator();
 
             DrawOverlay();
+
             drawList = ImGui.GetWindowDrawList();
 
+            // draw entities
             foreach (var entity in entities)
             {
                 // if entity is on screen, and entities are on server
@@ -468,7 +506,6 @@ public class Renderer : Overlay
             }
         }
     }
-
     // ------------------ ESP Functions ------------------ //
     private void DrawBones(Entity entity)
     {
@@ -515,6 +552,10 @@ public class Renderer : Overlay
         // set color based on team
         Vector4 rectColor = (localPlayer.team == entity.team) ? teamColor : enemyColor;
 
+        // get alpha-changed colors
+        Vector4 rectFillColor = new Vector4(rectColor.X, rectColor.Y, rectColor.Z, alphaValueRect);
+        borderColor = new Vector4(borderColor.X, borderColor.Y, borderColor.Z, alphaValueBorder);
+
         // get height of entity
         float entityHeight = entity.position2d.Y - entity.viewPosition2d.Y;
 
@@ -522,67 +563,93 @@ public class Renderer : Overlay
         Vector2 rectTop = new Vector2(entity.position2d.X - entityHeight / 4, entity.position2d.Y);
         Vector2 rectBottom = new Vector2(entity.position2d.X + entityHeight / 4, entity.viewPosition2d.Y);
 
-        drawList.AddRect(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(rectColor), 0.0f, ImDrawFlags.None, rectThickness);
+        if (fillColor)
+        {
+            // draw filled rectangle
+            drawList.AddRectFilled(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(rectFillColor));
+            if (drawBorders)
+            {
+                // draw border
+                drawList.AddRect(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+            }
+        }
+
+        else
+        {
+            // draw rectangle without fill
+            drawList.AddRect(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        }
     }
 
     private void Draw3dRectangle(Entity entity)
     {
-        // set color based on team
+        // Set color based on team
         Vector4 rectColor = (localPlayer.team == entity.team) ? teamColor : enemyColor;
 
-        float entityHeight = entity.position2d.Y - entity.viewPosition2d.Y;
+        // Get alpha-changed colors
+        Vector4 rectFillColor = new Vector4(rectColor.X, rectColor.Y, rectColor.Z, alphaValueRect);
+        borderColor = new Vector4(borderColor.X, borderColor.Y, borderColor.Z, alphaValueBorder);
 
-        // height and width (Z Val)
-        float h = entity.head.Z - entity.origin.Z;
-        float w = h / 2.5f;
+        float h = entity.head.Z - entity.origin.Z; // height
+        float w = h / 2f; // width
 
-        // center of entity
+        // get centities of each entity axis
         float cx = (entity.head.X + entity.origin.X) / 2;
         float cy = (entity.head.Y + entity.origin.Y) / 2;
         float cz = (entity.head.Z + entity.origin.Z) / 2;
 
-        // bounding box vertices
-        Vector3[] vertices = 
+        // get vertices
+        Vector3[] vertices =
         {
-            // bottom 
             new Vector3(cx - w / 2, cy - w / 2, cz - h / 2),
             new Vector3(cx + w / 2, cy - w / 2, cz - h / 2),
             new Vector3(cx + w / 2, cy + w / 2, cz - h / 2),
             new Vector3(cx - w / 2, cy + w / 2, cz - h / 2),
-
-            // top
             new Vector3(cx - w / 2, cy - w / 2, cz + h / 2),
             new Vector3(cx + w / 2, cy - w / 2, cz + h / 2),
             new Vector3(cx + w / 2, cy + w / 2, cz + h / 2),
             new Vector3(cx - w / 2, cy + w / 2, cz + h / 2)
         };
 
-        Vector2[] screenCoords3DParts = new Vector2[8];
-
-        // convert vertex onto 2D
+        // transform vertices to screen coordinates
+        Vector2[] screenCoords = new Vector2[8];
         for (int i = 0; i < 8; i++)
         {
-            screenCoords3DParts[i] = Calculate.WorldToScreen(entity.viewMatrix, vertices[i], (int)screenSize.X, (int)screenSize.Y);
+            screenCoords[i] = Calculate.WorldToScreen(entity.viewMatrix, vertices[i], (int)screenSize.X, (int)screenSize.Y);
         }
 
-        // bottom
-        drawList.AddLine(screenCoords3DParts[0], screenCoords3DParts[1], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[1], screenCoords3DParts[2], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[2], screenCoords3DParts[3], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[3], screenCoords3DParts[0], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        // draw rectangles
+        if (fillColor)
+        {
+            drawList.AddQuadFilled(screenCoords[0], screenCoords[1], screenCoords[2], screenCoords[3], ImGui.ColorConvertFloat4ToU32(rectFillColor)); // bottom
+            drawList.AddQuadFilled(screenCoords[4], screenCoords[5], screenCoords[6], screenCoords[7], ImGui.ColorConvertFloat4ToU32(rectFillColor)); // top
+            drawList.AddQuadFilled(screenCoords[0], screenCoords[1], screenCoords[5], screenCoords[4], ImGui.ColorConvertFloat4ToU32(rectFillColor)); // front
+            drawList.AddQuadFilled(screenCoords[2], screenCoords[3], screenCoords[7], screenCoords[6], ImGui.ColorConvertFloat4ToU32(rectFillColor)); // back
+            drawList.AddQuadFilled(screenCoords[1], screenCoords[2], screenCoords[6], screenCoords[5], ImGui.ColorConvertFloat4ToU32(rectFillColor)); // right
+            drawList.AddQuadFilled(screenCoords[3], screenCoords[0], screenCoords[4], screenCoords[7], ImGui.ColorConvertFloat4ToU32(rectFillColor)); // left
 
-        // top
-        drawList.AddLine(screenCoords3DParts[4], screenCoords3DParts[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[5], screenCoords3DParts[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[6], screenCoords3DParts[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[7], screenCoords3DParts[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            if (drawBorders)
+            {
+                drawList.AddQuad(screenCoords[0], screenCoords[1], screenCoords[2], screenCoords[3], ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+                drawList.AddQuad(screenCoords[4], screenCoords[5], screenCoords[6], screenCoords[7], ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+                drawList.AddQuad(screenCoords[0], screenCoords[1], screenCoords[5], screenCoords[4], ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+                drawList.AddQuad(screenCoords[2], screenCoords[3], screenCoords[7], screenCoords[6], ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+                drawList.AddQuad(screenCoords[1], screenCoords[2], screenCoords[6], screenCoords[5], ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+                drawList.AddQuad(screenCoords[3], screenCoords[0], screenCoords[4], screenCoords[7], ImGui.ColorConvertFloat4ToU32(borderColor), rectThickness);
+            }
+        }
 
-        // central
-        drawList.AddLine(screenCoords3DParts[0], screenCoords3DParts[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[1], screenCoords3DParts[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[2], screenCoords3DParts[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
-        drawList.AddLine(screenCoords3DParts[3], screenCoords3DParts[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        else
+        {
+            drawList.AddQuad(screenCoords[0], screenCoords[1], screenCoords[2], screenCoords[3], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            drawList.AddQuad(screenCoords[4], screenCoords[5], screenCoords[6], screenCoords[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            drawList.AddQuad(screenCoords[0], screenCoords[1], screenCoords[5], screenCoords[4], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            drawList.AddQuad(screenCoords[2], screenCoords[3], screenCoords[7], screenCoords[6], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            drawList.AddQuad(screenCoords[1], screenCoords[2], screenCoords[6], screenCoords[5], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            drawList.AddQuad(screenCoords[3], screenCoords[0], screenCoords[4], screenCoords[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+        }
     }
+
 
     private void DrawHealth(Entity entity)
     {
