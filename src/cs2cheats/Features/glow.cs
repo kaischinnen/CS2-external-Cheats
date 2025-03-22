@@ -48,6 +48,8 @@ class GlowC
 
                 if (lifestate != 256) continue;
 
+                if (!renderer.glowTeam && team == localPlayer.team) continue;
+
                 Entity entity = new Entity();
 
                 entity.team = team;
@@ -55,8 +57,29 @@ class GlowC
 
                 entities.Add(entity);
 
-                swed.WriteLong(currentPawn + Offsets.m_Glow + Offsets.m_glowColorOverride, renderer.glow64);
-                swed.WriteInt(currentPawn + Offsets.m_Glow + Offsets.m_bGlowing, 1);
+                // if we only glow enemies
+                if (!renderer.glowTeam)
+                {
+                    swed.WriteLong(currentPawn + Offsets.m_Glow + Offsets.m_glowColorOverride, renderer.glow64);
+                    swed.WriteInt(currentPawn + Offsets.m_Glow + Offsets.m_bGlowing, 1);
+                }
+
+                else
+                {
+                    // glow team color
+                    if (localPlayer.team == team)
+                    {
+                        swed.WriteLong(currentPawn + Offsets.m_Glow + Offsets.m_glowColorOverride, renderer.glowTeam64);
+                        swed.WriteInt(currentPawn + Offsets.m_Glow + Offsets.m_bGlowing, 1);
+                    }
+
+                    else
+                    {
+                        // glow enemy color
+                        swed.WriteLong(currentPawn + Offsets.m_Glow + Offsets.m_glowColorOverride, renderer.glowEnemy64);
+                        swed.WriteInt(currentPawn + Offsets.m_Glow + Offsets.m_bGlowing, 1);
+                    }
+                }
             }
         }
     }

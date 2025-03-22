@@ -29,6 +29,7 @@ public class Renderer : Overlay
     public bool drawRectangles = true;
     public bool drawHealth = true;
     public bool glow = false;
+    public bool glowTeam = false;
     public bool fillColor = false;
     public bool drawBorders = true;
 
@@ -37,7 +38,11 @@ public class Renderer : Overlay
 
     // glow color
     public Vector4 glowColor = new Vector4(1, 0, 0, 1); // red
+    public Vector4 glowTeamColor = new Vector4(0, 1, 0, 1); // green
+    public Vector4 glowEnemyColor = new Vector4(1, 0, 0, 1); // red
     public long glow64 = 0x800000FF;
+    public long glowTeam64 = 0x8000FF00;
+    public long glowEnemy64 = 0x800000FF;
 
     // fov information 
     public Vector2 screenSize = new Vector2(1920, 1080);
@@ -91,6 +96,8 @@ public class Renderer : Overlay
     // window aesthetics
     public Vector4 windowBgColor = new Vector4(0.1f, 0.1f, 0.1f, 0.85f); // dark-ish semi-transparent window
     public Vector4 accentColor = new Vector4(0.9f, 0.3f, 0.3f, 1.0f); // highlight color
+    Vector4 tabColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f); // dark gray for tab background
+    Vector4 tabActiveColor = new Vector4(0.5f, 0.1f, 0.1f, 1.0f); // red highlight for active tab
 
     // hotkey var and state
     public int hotkey = ImGuiKeyToVkey(ImGuiKey.MouseX2);
@@ -99,20 +106,22 @@ public class Renderer : Overlay
 
     protected override void Render()
     {
+        ImGui.PushStyleColor(ImGuiCol.Tab, tabColor);
+        ImGui.PushStyleColor(ImGuiCol.TabActive, tabActiveColor);
+        ImGui.PushStyleColor(ImGuiCol.TabHovered, new Vector4(tabActiveColor.X + 0.1f, tabActiveColor.Y + 0.1f, tabActiveColor.Z + 0.1f, tabActiveColor.W));
 
         // set window pos
         ImGui.SetNextWindowPos(new Vector2(320, 40), ImGuiCond.FirstUseEver); // (320,40) is right next to radar on 19020x1080. FirstUseEver sets position only the first time the window is drawn, allowing it to be moved afterwards
 
         // because the title is the longest text on initial state, we can use it to set the initial window size + some padding
         Vector2 titleSize = ImGui.CalcTextSize("CS2 Cheat Settings");
-        float minSWidth = titleSize.X + 50; // minimum width
-        float extraWidth = smoothAimbot ? 120 : 0; // add extra width if smooth aimbot is enabled (because slider is wider than minSWidth)
+        float minSWidth = titleSize.X + 100; // minimum width
+        float extraWidth = smoothAimbot ? 80 : 0; // add extra width if smooth aimbot is enabled (because slider is wider than minSWidth)
 
-        // have small window opened if none of fovaimbot not esp are enabled as these take up more space
-        if (!fovAimbot && !esp)
-        {
-            ImGui.SetNextWindowSize(new Vector2(minSWidth + extraWidth, 0));
-        }
+        Vector2 minSize = new Vector2(minSWidth + extraWidth, 100); 
+        Vector2 maxSize = new Vector2(600, 800); 
+        ImGui.SetNextWindowSizeConstraints(minSize, maxSize);
+
 
         // title bar
         ImGui.Begin("CS2 Cheat Settings", ref isWindowOpen, ImGuiWindowFlags.AlwaysAutoResize); // resize window automatically based on content
@@ -123,54 +132,108 @@ public class Renderer : Overlay
             Environment.Exit(0);
         }
 
-        // render hotkey button(s)
-        RenderHotkey();
-
-        // checkboxes
-        ImGui.Checkbox("AntiFlash", ref antiFlash);
-        ImGui.Checkbox("RCS", ref rcs);
-        ImGui.Checkbox("Radar Hack", ref radar);
-        ImGui.Checkbox("Bhop", ref bhop);
-        ImGui.Checkbox("Triggerbot", ref triggerbot);
-        ImGui.Checkbox("Target Teammates", ref aimOnTeam);
-        ImGui.Checkbox("Check Visability", ref visablityCheck);
-
-        ImGui.Checkbox("Glow", ref glow);
-        if (glow)
-        {
-            if (ImGui.CollapsingHeader("Glow Color"))
-            {
-                ImGui.PushItemWidth(-1f);
-                ImGui.ColorPicker4("##glowcolor", ref glowColor, ImGuiColorEditFlags.NoSidePreview);
-
-                uint temp = ImGui.ColorConvertFloat4ToU32(glowColor);
-                glow64 = (long)temp;
-
-                ImGui.PopItemWidth();
-            }
-        }
-
-        ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
-
-        // if smooth aimbot is enabled, show slider
-        if (smoothAimbot)
-        {
-            ImGui.SliderFloat("Smoothness", ref smoothAimbotValue, 1f, 50.0f); // min, max
-        }
-
-        ImGui.Checkbox("ESP", ref esp);
-
-        RenderEsp();
-
-        // render radio buttons for aimbot and fov aimbot (toggle between them)
-        RenderAimbotRadioButtons();
-
         // sets window aesthetics
         SetWindowAesthetics();
 
-        // render fov aimbot
-        RenderFovAimbot();
+        ImGui.BeginTabBar("Settings");
 
+        // misc
+        if (ImGui.BeginTabItem("Misc"))
+        {
+            // render hotkey button(s)
+            RenderHotkey();
+
+            // checkboxes
+            ImGui.Checkbox("AntiFlash", ref antiFlash);
+            ImGui.Checkbox("RCS", ref rcs);
+            ImGui.Checkbox("Radar Hack", ref radar);
+            ImGui.Checkbox("Bhop", ref bhop);
+            ImGui.Checkbox("Triggerbot", ref triggerbot);
+            ImGui.Checkbox("Target Teammates", ref aimOnTeam);
+            ImGui.Checkbox("Check Visability", ref visablityCheck);
+
+            ImGui.Checkbox("Glow", ref glow);
+            if (glow)
+            {
+                ImGui.Checkbox("Glow Team", ref glowTeam);
+
+                if (glowTeam)
+                {
+                    if (ImGui.CollapsingHeader("Team Color"))
+                    {
+                        ImGui.PushItemWidth(-1f);
+                        ImGui.ColorPicker4("##glowcolor", ref glowTeamColor, ImGuiColorEditFlags.NoSidePreview);
+
+                        uint tempA = ImGui.ColorConvertFloat4ToU32(glowTeamColor);
+                        glowTeam64 = (long)tempA;
+
+                        ImGui.PopItemWidth();
+                    }
+
+                    if (ImGui.CollapsingHeader("Enemy Color"))
+                    {
+                        ImGui.PushItemWidth(-1f);
+                        ImGui.ColorPicker4("##glowcolor", ref glowEnemyColor, ImGuiColorEditFlags.NoSidePreview);
+
+                        uint tempB = ImGui.ColorConvertFloat4ToU32(glowEnemyColor);
+                        glowEnemy64 = (long)tempB;
+
+                        ImGui.PopItemWidth();
+                    }
+                }
+
+                else
+                {
+                    if (ImGui.CollapsingHeader("Glow Color"))
+                    {
+                        ImGui.PushItemWidth(-1f);
+                        ImGui.ColorPicker4("##glowcolor", ref glowColor, ImGuiColorEditFlags.NoSidePreview);
+
+                        uint temp = ImGui.ColorConvertFloat4ToU32(glowColor);
+                        glow64 = (long)temp;
+
+                        ImGui.PopItemWidth();
+                    }
+                }
+            }
+            ImGui.EndTabItem();
+        }
+
+        // aimbot
+        if (ImGui.BeginTabItem("Aimbot"))
+        {
+
+            ImGui.Checkbox("Smooth Aimbot", ref smoothAimbot);
+
+            // if smooth aimbot is enabled, show slider
+            if (smoothAimbot)
+            {
+                ImGui.SliderFloat("Smoothness", ref smoothAimbotValue, 1f, 50.0f); // min, max
+            }
+
+            // render radio buttons for aimbot and fov aimbot (toggle between them)
+            RenderAimbotRadioButtons();
+
+
+            // render fov aimbot
+            RenderFovAimbot();
+
+            ImGui.EndTabItem();
+        }
+
+        // esp
+        if (ImGui.BeginTabItem("ESP"))
+        {
+            // render esp
+            RenderEsp();
+
+            ImGui.EndTabItem();
+        }
+
+        ImGui.EndTabBar();
+
+        ImGui.PopStyleColor();
+        ImGui.PopStyleVar();
         ImGui.End();
     }
 
@@ -226,13 +289,11 @@ public class Renderer : Overlay
 
     private void RenderEsp()
     {
+        ImGui.Checkbox("ESP", ref esp);
+
         // if esp is enabled
         if (esp)
         {
-            ImGui.Separator();
-            ImGui.Spacing();
-            ImGui.Separator();
-
             ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header hovered color
             ImGui.PushStyleColor(ImGuiCol.HeaderActive, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header active color
@@ -339,10 +400,6 @@ public class Renderer : Overlay
             // if fill rectangle is disabled, show thickness slider
             if (!fillColor) ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
 
-            ImGui.Separator();
-            ImGui.Spacing();
-            ImGui.Separator();
-
             DrawOverlay();
 
             drawList = ImGui.GetForegroundDrawList();
@@ -372,7 +429,7 @@ public class Renderer : Overlay
                     if (draw3dEsp) Draw3dRectangle(entity);
                 }
             }
-            ImGui.PopStyleColor(3);
+            ImGui.PopStyleColor();
             ImGui.End();
         }
     }
@@ -657,7 +714,6 @@ public class Renderer : Overlay
             drawList.AddQuad(screenCoords[3], screenCoords[0], screenCoords[4], screenCoords[7], ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
         }
     }
-
 
     private void DrawHealth(Entity entity)
     {
