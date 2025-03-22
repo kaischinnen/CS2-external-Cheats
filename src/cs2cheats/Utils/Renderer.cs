@@ -345,7 +345,7 @@ public class Renderer : Overlay
 
             DrawOverlay();
 
-            drawList = ImGui.GetWindowDrawList();
+            drawList = ImGui.GetForegroundDrawList();
 
             // draw entities
             foreach (var entity in entities)

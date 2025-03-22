@@ -61,7 +61,7 @@ class AimbotC
 
                 // visablity check
                 // if visabilityCheck is on and enemy is not spotted, we do nothing
-                if (renderer.visablityCheck && !isSpotted) continue;
+                if (renderer.visablityCheck && !isSpotted && localPlayer.team != team) continue;
 
                 if (currentPawn == localPlayer.pawnAddress) continue; // if the entity is us)
 
@@ -116,8 +116,8 @@ class AimbotC
             }
 
             // sort entities
-            // if fov aimbot is turned on
-            if (renderer.aimbotMode == 1)
+            // if fov aimbot or visablity is on: lock on to closest entity by crosshair pixel distance
+            if (renderer.aimbotMode == 1 || renderer.visablityCheck)
             {
                 // if fov aimbot is enabled, sort entities by pixel distance
                 entities = entities.OrderBy(o => o.pixelDistance).ToList();
@@ -135,7 +135,7 @@ class AimbotC
                     continue;
                 }
                 // if closes entity is not in fov, we do nothing
-                if (entities[0].pixelDistance > renderer.FOV)
+                if (!renderer.visablityCheck && entities[0].pixelDistance > renderer.FOV)
                 {
                     Thread.Sleep(2);
                     continue;
