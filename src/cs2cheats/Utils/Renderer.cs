@@ -27,7 +27,7 @@ public class Renderer : Overlay
     public bool drawJoints = true;
     public bool drawLines = true;
     public bool drawRectangles = true;
-    public bool drawHealth = true;
+    public bool drawHealth = false;
     public bool glow = false;
     public bool glowTeam = false;
     public bool fillColor = false;
@@ -152,50 +152,8 @@ public class Renderer : Overlay
             ImGui.Checkbox("Target Teammates", ref aimOnTeam);
             ImGui.Checkbox("Check Visability", ref visablityCheck);
 
-            ImGui.Checkbox("Glow", ref glow);
-            if (glow)
-            {
-                ImGui.Checkbox("Glow Team", ref glowTeam);
+            RenderGlow();
 
-                if (glowTeam)
-                {
-                    if (ImGui.CollapsingHeader("Team Color"))
-                    {
-                        ImGui.PushItemWidth(-1f);
-                        ImGui.ColorPicker4("##glowcolor", ref glowTeamColor, ImGuiColorEditFlags.NoSidePreview);
-
-                        uint tempA = ImGui.ColorConvertFloat4ToU32(glowTeamColor);
-                        glowTeam64 = (long)tempA;
-
-                        ImGui.PopItemWidth();
-                    }
-
-                    if (ImGui.CollapsingHeader("Enemy Color"))
-                    {
-                        ImGui.PushItemWidth(-1f);
-                        ImGui.ColorPicker4("##glowcolor", ref glowEnemyColor, ImGuiColorEditFlags.NoSidePreview);
-
-                        uint tempB = ImGui.ColorConvertFloat4ToU32(glowEnemyColor);
-                        glowEnemy64 = (long)tempB;
-
-                        ImGui.PopItemWidth();
-                    }
-                }
-
-                else
-                {
-                    if (ImGui.CollapsingHeader("Glow Color"))
-                    {
-                        ImGui.PushItemWidth(-1f);
-                        ImGui.ColorPicker4("##glowcolor", ref glowColor, ImGuiColorEditFlags.NoSidePreview);
-
-                        uint temp = ImGui.ColorConvertFloat4ToU32(glowColor);
-                        glow64 = (long)temp;
-
-                        ImGui.PopItemWidth();
-                    }
-                }
-            }
             ImGui.EndTabItem();
         }
 
@@ -224,6 +182,8 @@ public class Renderer : Overlay
         // esp
         if (ImGui.BeginTabItem("ESP"))
         {
+            ImGui.Checkbox("ESP", ref esp);
+
             // render esp
             RenderEsp();
 
@@ -235,6 +195,51 @@ public class Renderer : Overlay
         ImGui.PopStyleColor();
         ImGui.PopStyleVar();
         ImGui.End();
+
+        // draw draw overlay when when tab is not active
+        if (esp)
+        {
+            DrawOverlay();
+
+            drawList = ImGui.GetForegroundDrawList();
+
+            // draw entities
+            foreach (var entity in entities)
+            {
+                // if entity is on screen, and entities are on server
+                if (IsEntityOnScreen(entity))
+                {
+                    // draw health bar
+                    if (drawHealth) DrawHealth(entity);
+
+                    // draw skeleton
+                    if (drawBones) DrawBones(entity);
+
+                    // draw joints
+                    if (drawJoints) DrawJoints(entity);
+
+                    // draw line
+                    if (drawLines) DrawLine(entity);
+
+                    // draw 2d rectangle
+                    if (draw2dEsp) Draw2dRectangle(entity);
+
+                    // draw 3d rectangle
+                    if (draw3dEsp) Draw3dRectangle(entity);
+                }
+            }
+        }
+
+        if (fovAimbot)
+        {
+            // draw cirlce
+            DrawOverlay();
+            ImDrawListPtr drawList2 = ImGui.GetForegroundDrawList(); // get the draw list
+
+            int segmentCount = (int)Math.Max(20, FOV / 2); // amount of "line pieces" are used to draw the circle and the larger the circle (fov), the more segments you want for proper smoothness 
+
+            drawList2.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor), segmentCount, (int)circleThickness); // center, radius, color, thickness
+        }
     }
 
     // ------------------ Render Functions ------------------ // 
@@ -289,8 +294,6 @@ public class Renderer : Overlay
 
     private void RenderEsp()
     {
-        ImGui.Checkbox("ESP", ref esp);
-
         // if esp is enabled
         if (esp)
         {
@@ -400,37 +403,58 @@ public class Renderer : Overlay
             // if fill rectangle is disabled, show thickness slider
             if (!fillColor) ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
 
-            DrawOverlay();
-
-            drawList = ImGui.GetForegroundDrawList();
-
-            // draw entities
-            foreach (var entity in entities)
-            {
-                // if entity is on screen, and entities are on server
-                if (IsEntityOnScreen(entity))
-                {
-                    // draw health bar
-                    if (drawHealth) DrawHealth(entity);
-
-                    // draw skeleton
-                    if (drawBones) DrawBones(entity);
-
-                    // draw joints
-                    if (drawJoints) DrawJoints(entity);
-
-                    // draw line
-                    if (drawLines) DrawLine(entity);
-
-                    // draw 2d rectangle
-                    if (draw2dEsp) Draw2dRectangle(entity);
-
-                    // draw 3d rectangle
-                    if (draw3dEsp) Draw3dRectangle(entity);
-                }
-            }
             ImGui.PopStyleColor();
             ImGui.End();
+        }
+    }
+
+    private void RenderGlow()
+    {
+        ImGui.Checkbox("Glow", ref glow);
+        if (glow)
+        {
+            ImGui.Checkbox("Glow Team", ref glowTeam);
+
+            // if we also glow team, show team and enemy color pickers
+            if (glowTeam)
+            {
+                if (ImGui.CollapsingHeader("Team Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##glowcolor", ref glowTeamColor, ImGuiColorEditFlags.NoSidePreview);
+
+                    uint tempA = ImGui.ColorConvertFloat4ToU32(glowTeamColor);
+                    glowTeam64 = (long)tempA;
+
+                    ImGui.PopItemWidth();
+                }
+
+                if (ImGui.CollapsingHeader("Enemy Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##glowcolor", ref glowEnemyColor, ImGuiColorEditFlags.NoSidePreview);
+
+                    uint tempB = ImGui.ColorConvertFloat4ToU32(glowEnemyColor);
+                    glowEnemy64 = (long)tempB;
+
+                    ImGui.PopItemWidth();
+                }
+            }
+
+            // else show single color picker
+            else
+            {
+                if (ImGui.CollapsingHeader("Glow Color"))
+                {
+                    ImGui.PushItemWidth(-1f);
+                    ImGui.ColorPicker4("##glowcolor", ref glowColor, ImGuiColorEditFlags.NoSidePreview);
+
+                    uint temp = ImGui.ColorConvertFloat4ToU32(glowColor);
+                    glow64 = (long)temp;
+
+                    ImGui.PopItemWidth();
+                }
+            }
         }
     }
 
@@ -455,16 +479,7 @@ public class Renderer : Overlay
                 ImGui.ColorPicker4("##circlecolor", ref circleColor, ImGuiColorEditFlags.NoSidePreview);
             }
 
-            // draw cirlce
-            DrawOverlay();
-            ImDrawListPtr drawList2 = ImGui.GetForegroundDrawList(); // get the draw list
-
-            int segmentCount = (int)Math.Max(20, FOV / 2); // amount of "line pieces" are used to draw the circle and the larger the circle (fov), the more segments you want for proper smoothness 
-
-            drawList2.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor), segmentCount, (int)circleThickness); // center, radius, color, thickness
             ImGui.PopStyleColor(3);
-
-            ImGui.End();
         }
     }
 
@@ -566,6 +581,7 @@ public class Renderer : Overlay
             }
         }
     }
+
     // ------------------ ESP Functions ------------------ //
     private void DrawBones(Entity entity)
     {
@@ -618,10 +634,11 @@ public class Renderer : Overlay
 
         // get height of entity
         float entityHeight = entity.position2d.Y - entity.viewPosition2d.Y;
+        float headOffset = entityHeight * 0.12f; // add margin on top because position2d is eyelevel but the box should be drawn arround the head and not the eyes
 
         // calc dimensions
         Vector2 rectTop = new Vector2(entity.position2d.X - entityHeight / 4, entity.position2d.Y);
-        Vector2 rectBottom = new Vector2(entity.position2d.X + entityHeight / 4, entity.viewPosition2d.Y);
+        Vector2 rectBottom = new Vector2(entity.position2d.X + entityHeight / 4, entity.viewPosition2d.Y - headOffset);
 
         if (fillColor)
         {
@@ -653,10 +670,13 @@ public class Renderer : Overlay
         float h = entity.head.Z - entity.origin.Z; // height
         float w = h / 2f; // width
 
+        float headOffset = h * 0.19f;
+        float adjustHeadZ = entity.head.Z + headOffset; 
+
         // get centities of each entity axis
         float cx = (entity.head.X + entity.origin.X) / 2;
         float cy = (entity.head.Y + entity.origin.Y) / 2;
-        float cz = (entity.head.Z + entity.origin.Z) / 2;
+        float cz = (entity.origin.Z + adjustHeadZ) / 2;
 
         // get vertices
         Vector3[] vertices =
