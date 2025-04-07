@@ -103,12 +103,16 @@ public class Renderer : Overlay
     public int hotkey = ImGuiKeyToVkey(ImGuiKey.MouseX2);
     public ImGuiKey iKey = ImGuiKey.MouseX2;
     public bool isWaitingForHotkey = false;
+    public bool hasHotkeyBeenOpened = false;  // check if the hotkey menu has been opened (should have a different initial color making it more obvious to see and change)
+    public int stylePushCount = 0; // keep track of amount of pushed styles 
+
+    // set overlay window size (needed for transparentOverlay version > 9.1);
+    public Renderer() : base(1920, 1080) { }
 
     protected override void Render()
     {
-        ImGui.PushStyleColor(ImGuiCol.Tab, tabColor);
-        ImGui.PushStyleColor(ImGuiCol.TabActive, tabActiveColor);
-        ImGui.PushStyleColor(ImGuiCol.TabHovered, new Vector4(tabActiveColor.X + 0.1f, tabActiveColor.Y + 0.1f, tabActiveColor.Z + 0.1f, tabActiveColor.W));
+        // sets window aesthetics
+        SetWindowAesthetics();
 
         // set window pos
         ImGui.SetNextWindowPos(new Vector2(320, 40), ImGuiCond.FirstUseEver); // (320,40) is right next to radar on 19020x1080. FirstUseEver sets position only the first time the window is drawn, allowing it to be moved afterwards
@@ -118,8 +122,9 @@ public class Renderer : Overlay
         float minSWidth = titleSize.X + 100; // minimum width
         float extraWidth = smoothAimbot ? 80 : 0; // add extra width if smooth aimbot is enabled (because slider is wider than minSWidth)
 
+        // set min/max window size
         Vector2 minSize = new Vector2(minSWidth + extraWidth, 100); 
-        Vector2 maxSize = new Vector2(600, 800); 
+        Vector2 maxSize = new Vector2(1920, 1080); 
         ImGui.SetNextWindowSizeConstraints(minSize, maxSize);
 
 
@@ -131,9 +136,6 @@ public class Renderer : Overlay
         {
             Environment.Exit(0);
         }
-
-        // sets window aesthetics
-        SetWindowAesthetics();
 
         ImGui.BeginTabBar("Settings");
 
@@ -190,19 +192,16 @@ public class Renderer : Overlay
             ImGui.EndTabItem();
         }
 
-        ImGui.EndTabBar();
+        if (esp || fovAimbot)
+        {
+            DrawOverlay();
+        }
 
-        ImGui.PopStyleColor();
-        ImGui.PopStyleVar();
-        ImGui.End();
+        drawList = ImGui.GetForegroundDrawList();
 
         // draw draw overlay when when tab is not active
         if (esp)
         {
-            DrawOverlay();
-
-            drawList = ImGui.GetForegroundDrawList();
-
             // draw entities
             foreach (var entity in entities)
             {
@@ -232,21 +231,23 @@ public class Renderer : Overlay
 
         if (fovAimbot)
         {
-            // draw cirlce
-            DrawOverlay();
-            ImDrawListPtr drawList2 = ImGui.GetForegroundDrawList(); // get the draw list
-
             int segmentCount = (int)Math.Max(20, FOV / 2); // amount of "line pieces" are used to draw the circle and the larger the circle (fov), the more segments you want for proper smoothness 
 
-            drawList2.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor), segmentCount, (int)circleThickness); // center, radius, color, thickness
+            drawList.AddCircle(new Vector2(screenSize.X / 2, screenSize.Y / 2), FOV, ImGui.ColorConvertFloat4ToU32(circleColor), segmentCount, (int)circleThickness); // center, radius, color, thickness
         }
+
+        ImGui.EndTabBar();
+
+        ImGui.PopStyleColor(10);
+        ImGui.PopStyleVar(3);
+
+        ImGui.End();
     }
 
     // ------------------ Render Functions ------------------ // 
     private void RenderHotkey()
     {
-        // hotkey config
-        if (ImGui.CollapsingHeader("Change Hotkey"))
+        if (hasHotkeyBeenOpened) 
         {
             // set the header background color
             ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
@@ -258,6 +259,14 @@ public class Renderer : Overlay
             ImGui.PushStyleColor(ImGuiCol.ButtonHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // hovererd button color
             ImGui.PushStyleColor(ImGuiCol.ButtonActive, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // active button color
 
+            stylePushCount += 6; 
+        }
+
+
+        // hotkey config
+        if (ImGui.CollapsingHeader("Change Hotkey"))
+        {
+            hasHotkeyBeenOpened = true; // set to true if the hotkey menu has been opened
             // if "Change hotkey" is pressed, open another button which waits until a button for a (new) hotkey is pressed:
             if (ImGui.Button("Set Hotkey"))
             {
@@ -287,9 +296,14 @@ public class Renderer : Overlay
                 // display current hotkey
                 ImGui.Text("Current Hotkey: " + iKey.ToString());
             }
-            ImGui.PopStyleColor(3);
-            ImGui.PopStyleVar(3);
         }
+
+        if (hasHotkeyBeenOpened) 
+        { 
+            ImGui.PopStyleColor(stylePushCount);
+            stylePushCount = 0; // reset style push count
+        }
+
     }
 
     private void RenderEsp()
@@ -403,8 +417,7 @@ public class Renderer : Overlay
             // if fill rectangle is disabled, show thickness slider
             if (!fillColor) ImGui.SliderFloat("Rectangle Thickness", ref rectThickness, 1, 5);
 
-            ImGui.PopStyleColor();
-            ImGui.End();
+            ImGui.PopStyleColor(3);
         }
     }
 
@@ -421,7 +434,7 @@ public class Renderer : Overlay
                 if (ImGui.CollapsingHeader("Team Color"))
                 {
                     ImGui.PushItemWidth(-1f);
-                    ImGui.ColorPicker4("##glowcolor", ref glowTeamColor, ImGuiColorEditFlags.NoSidePreview);
+                    ImGui.ColorPicker4("##glowcolor1", ref glowTeamColor, ImGuiColorEditFlags.NoSidePreview);
 
                     uint tempA = ImGui.ColorConvertFloat4ToU32(glowTeamColor);
                     glowTeam64 = (long)tempA;
@@ -432,7 +445,7 @@ public class Renderer : Overlay
                 if (ImGui.CollapsingHeader("Enemy Color"))
                 {
                     ImGui.PushItemWidth(-1f);
-                    ImGui.ColorPicker4("##glowcolor", ref glowEnemyColor, ImGuiColorEditFlags.NoSidePreview);
+                    ImGui.ColorPicker4("##glowcolor2", ref glowEnemyColor, ImGuiColorEditFlags.NoSidePreview);
 
                     uint tempB = ImGui.ColorConvertFloat4ToU32(glowEnemyColor);
                     glowEnemy64 = (long)tempB;
@@ -477,6 +490,7 @@ public class Renderer : Overlay
                 // take up full width of available space in the current layout (there used to be the preview color but because it was removed in the next line and i wanted to fill the empty space)
                 ImGui.PushItemWidth(-1f);  // -1f fills up horizontal space
                 ImGui.ColorPicker4("##circlecolor", ref circleColor, ImGuiColorEditFlags.NoSidePreview);
+                ImGui.PopItemWidth();
             }
 
             ImGui.PopStyleColor(3);
@@ -811,6 +825,7 @@ public class Renderer : Overlay
         ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.5f, 0.1f, 0.1f, 1.0f)); // Highlight title bar
         ImGui.PushStyleColor(ImGuiCol.FrameBg, new Vector4(0.9f, 0.3f, 0.3f, 1.0f)); // Frame background
         ImGui.PushStyleColor(ImGuiCol.CheckMark, accentColor); // Checkbox highlight
+
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 10f); // Rounded corners
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5f); // Rounded frames
         ImGui.PushStyleVar(ImGuiStyleVar.GrabRounding, 5f); // Rounded sliders
@@ -819,11 +834,16 @@ public class Renderer : Overlay
         ImGui.PushStyleColor(ImGuiCol.SliderGrab, accentColor); // Slider handle color
         ImGui.PushStyleColor(ImGuiCol.SliderGrabActive, accentColor); // Active slider handle color
         ImGui.PushStyleColor(ImGuiCol.FrameBg, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // Slider background 
+
+        ImGui.PushStyleColor(ImGuiCol.TabSelected, accentColor * new Vector4(0.5f, 0.3f, 0.3f, 1.0f));
+        ImGui.PushStyleColor(ImGuiCol.Tab, tabColor);
+        ImGui.PushStyleColor(ImGuiCol.TabHovered, new Vector4(tabActiveColor.X + 0.1f, tabActiveColor.Y + 0.1f, tabActiveColor.Z + 0.1f, tabActiveColor.W));
     }
 
     private static void DrawOverlay()
     {
-        ImGui.Begin("overlay", ImGuiWindowFlags.NoDecoration
+        ImGui.Begin("overlay", 
+              ImGuiWindowFlags.NoDecoration
             | ImGuiWindowFlags.NoBackground
             | ImGuiWindowFlags.NoBringToFrontOnFocus
             | ImGuiWindowFlags.NoMove
@@ -832,6 +852,8 @@ public class Renderer : Overlay
             | ImGuiWindowFlags.NoScrollbar
             | ImGuiWindowFlags.NoScrollWithMouse
             );
+
+        ImGui.End();
     }
 
     // mapping ImGuiKey to Virtual Key Codes (see: https://learn.microsoft.com/de-de/windows/win32/inputdev/virtual-key-codes)
