@@ -2,6 +2,7 @@ using ClickableTransparentOverlay;
 using CS2Cheats.Utils;
 using ImGuiNET;
 using System.Collections.Concurrent;
+using System.Net.WebSockets;
 using System.Numerics;
 
 public class Renderer : Overlay
@@ -32,6 +33,7 @@ public class Renderer : Overlay
     public bool glowTeam = false;
     public bool fillColor = false;
     public bool drawBorders = true;
+    public bool previewESP = false; 
 
     // initial smooth aimbot value  
     public float smoothAimbotValue = 1.0f;
@@ -54,7 +56,9 @@ public class Renderer : Overlay
 
     // entity queue and objects (thread safe)
     public ConcurrentQueue<Entity> entities = new ConcurrentQueue<Entity>();
+    public List<Entity> entityList = new List<Entity>(); // list of entities
     public Entity localPlayer = new Entity();
+    public Entity closestPlayer = new Entity();
     public readonly object entityLock = new object(); // lock for entities 
     ImDrawListPtr drawList;
 
@@ -184,13 +188,46 @@ public class Renderer : Overlay
         // esp
         if (ImGui.BeginTabItem("ESP"))
         {
-            ImGui.Checkbox("ESP", ref esp);
+            // esp settings (left side)
+            ImGui.BeginGroup();
 
-            // render esp
-            RenderEsp();
+            ImGui.Checkbox("ESP", ref esp);
+            ImGui.Checkbox("Preview ESP", ref previewESP);
+
+            RenderEsp(); 
+
+            ImGui.EndGroup();
+
+            ImGui.SameLine();
+
+            // esp Preview (right side)
+            if (previewESP)
+            {
+                ImGui.BeginGroup();
+                Vector2 boxSize = new Vector2(300, 200);
+
+                ImGui.BeginChild("ESP Preview", boxSize, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+                ImGui.Text("ESP Preview");
+                ImGui.Separator();
+
+                if (closestPlayer != null)
+                {
+                    DrawEspPreview(closestPlayer);
+                }
+                else
+                {
+                    ImGui.Text("No entity in range.");
+                }
+
+                ImGui.EndChild();
+
+                ImGui.EndGroup();
+            }
 
             ImGui.EndTabItem();
         }
+
+
 
         if (esp || fovAimbot)
         {
@@ -794,6 +831,12 @@ public class Renderer : Overlay
         }
     }
 
+    private void DrawEspPreview(Entity entity)
+    {
+        ImGui.Text($"Health: {entity.health}");
+        ImGui.Text("Team: " + entity.team);
+    }
+
     private bool IsEntityOnScreen(Entity entity)
     {
         if (entity.position2d.X > 0 && entity.position2d.X < screenSize.X && entity.position2d.Y > 0 && entity.position2d.Y < screenSize.Y)
@@ -814,6 +857,14 @@ public class Renderer : Overlay
         lock (entityLock)
         {
             localPlayer = newEntity;
+        }
+    }
+
+    public void UpdateClosestPlayer(Entity entity)
+    {
+        lock (entityLock)
+        {
+            closestPlayer = entity;
         }
     }
 
