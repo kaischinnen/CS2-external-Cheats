@@ -9,6 +9,8 @@ class EspC
 {
     public static void Esp(Renderer renderer, Swed swed, IntPtr client, CancellationToken token)
     {
+        Vector2 screenSize = renderer.screenSize;
+
         Reader reader = new Reader(swed);
 
         List<Entity> entities = new List<Entity>();
@@ -44,11 +46,18 @@ class EspC
 
                 if (currentPawn == localPlayer.pawnAddress) continue;
 
+                // get current weapon
+                IntPtr currentWeapon = swed.ReadPointer(currentPawn, Offsets.m_pClippingWeapon);
+
+                short weaponDefinitionIndex = swed.ReadShort(currentWeapon, Offsets.m_AttributeManager + Offsets.m_Item + Offsets.m_iItemDefinitionIndex);
+                if (weaponDefinitionIndex == -1) continue;
+
                 IntPtr sceneNode = swed.ReadPointer(currentPawn, Offsets.m_pGameSceneNode);
                 IntPtr boneMatrix = swed.ReadPointer(sceneNode, Offsets.m_modelState + 0x80);
 
                 int team = swed.ReadInt(currentPawn, Offsets.m_iTeamNum);   
                 int lifeState = swed.ReadInt(currentPawn, Offsets.m_lifeState);
+                string name = swed.ReadString(currentController, Offsets.m_iszPlayerName, 32);
 
                 if (lifeState != 256) continue;
 
@@ -69,6 +78,11 @@ class EspC
                 entity.viewPosition2d = Calculate.WorldToScreen(viewMatrix, Vector3.Add(entity.origin, entity.view), (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // view position on screen
                 entity.viewMatrix = viewMatrix; // view matrix
                 entity.head = swed.ReadVec(boneMatrix, 6 * 32); // head position
+                entity.head2d = Calculate.WorldToScreen(viewMatrix, entity.head, (int)renderer.screenSize.X, (int)renderer.screenSize.Y); // head position on screen
+                entity.pixelDistance = Vector2.Distance(entity.head2d, new Vector2(screenSize.X / 2, screenSize.Y / 2));
+                entity.name = name;
+                entity.currentWeaponIndex = weaponDefinitionIndex;
+                entity.currentWeaponName = Enum.GetName(typeof(Weapons), weaponDefinitionIndex);
 
                 entities.Add(entity);
 
@@ -82,9 +96,23 @@ class EspC
 
             }
 
+            entities = entities.OrderBy(o => o.pixelDistance).ToList();
+            try
+            {
+                float temp = entities[0].pixelDistance;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                Console.WriteLine("There seems to be no entitites in this server!");
+                Thread.Sleep(200);
+                continue;
+            }
+;
             // fetch over to renderer
             renderer.UpdateLocalPlayer(localPlayer);
             renderer.UpdateEntities(entities);
+            renderer.UpdateClosestPlayer(entities[0]);
+
             Thread.Sleep(1);
         }
     }

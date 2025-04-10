@@ -34,6 +34,12 @@ public class Offsets
     public static int m_Glow;
     public static int m_glowColorOverride;
     public static int m_bGlowing;
+    public static int m_pClippingWeapon;
+    public static int m_AttributeManager;
+    public static int m_Item;
+    public static int m_pWeaponServices;
+    public static int m_hMyWeapons;
+    public static int m_iItemDefinitionIndex;
 
     // button.cs
     public static int jump;
@@ -85,6 +91,12 @@ public class Offsets
             destData.m_Glow = sourceDataClient.clientdll.classes.C_BaseModelEntity.fields.m_Glow;
             destData.m_glowColorOverride = sourceDataClient.clientdll.classes.CGlowProperty.fields.m_glowColorOverride;
             destData.m_bGlowing = sourceDataClient.clientdll.classes.CGlowProperty.fields.m_bGlowing;
+            destData.m_pClippingWeapon = sourceDataClient.clientdll.classes.C_CSPlayerPawnBase.fields.m_pClippingWeapon;
+            destData.m_AttributeManager = sourceDataClient.clientdll.classes.C_EconEntity.fields.m_AttributeManager;
+            destData.m_Item = sourceDataClient.clientdll.classes.C_AttributeContainer.fields.m_Item;
+            destData.m_pWeaponServices = sourceDataClient.clientdll.classes.C_BasePlayerPawn.fields.m_pWeaponServices;
+            destData.m_hMyWeapons = sourceDataClient.clientdll.classes.CPlayer_WeaponServices.fields.m_hMyWeapons;
+            destData.m_iItemDefinitionIndex = sourceDataClient.clientdll.classes.C_EconItemView.fields.m_iItemDefinitionIndex;
 
             // buttons
             destData.jump = sourceDataButtons.clientdll.jump;
@@ -97,6 +109,7 @@ public class Offsets
             throw;
         }
     }
+
     private static void UpdateStaticFields(dynamic data)
     {
         dwViewAngles = data.dwViewAngles;
@@ -122,6 +135,12 @@ public class Offsets
         m_Glow = data.m_Glow;
         m_glowColorOverride = data.m_glowColorOverride;
         m_bGlowing = data.m_bGlowing;
+        m_pClippingWeapon = data.m_pClippingWeapon;
+        m_AttributeManager = data.m_AttributeManager;
+        m_Item = data.m_Item;
+        m_pWeaponServices = data.m_pWeaponServices;
+        m_hMyWeapons = data.m_hMyWeapons;
+        m_iItemDefinitionIndex = data.m_iItemDefinitionIndex;
 
         jump = data.jump;
         attack = data.attack;;   

@@ -2,7 +2,6 @@ using ClickableTransparentOverlay;
 using CS2Cheats.Utils;
 using ImGuiNET;
 using System.Collections.Concurrent;
-using System.Net.WebSockets;
 using System.Numerics;
 
 public class Renderer : Overlay
@@ -80,6 +79,8 @@ public class Renderer : Overlay
     public Vector2 leftEdgeTop;
     public Vector2 leftEdgeBottom;
 
+    public Vector4 espWindowColor = new Vector4(1, 1, 1, 0.7f);
+
     // toggle variables, indicating whether the task for the feature is running or not.
     public int antiFlashRunning = 0;
     public int rcsRunning = 0;
@@ -91,6 +92,7 @@ public class Renderer : Overlay
     public int espRunning = 0;
     public int esp2dRunning = 0;
     public int esp3dRunning = 0;
+    public int previewEspRunning = 0;
     public int glowRunning = 0;
 
     // aimbot mode for toggling between aimbot and fov aimbot
@@ -204,7 +206,7 @@ public class Renderer : Overlay
             if (previewESP)
             {
                 ImGui.BeginGroup();
-                Vector2 boxSize = new Vector2(300, 200);
+                Vector2 boxSize = new Vector2(190, 100);
 
                 ImGui.BeginChild("ESP Preview", boxSize, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
                 ImGui.Text("ESP Preview");
@@ -363,12 +365,18 @@ public class Renderer : Overlay
             {
                 ImGui.SliderFloat("Bone Thickness", ref boneThickness, 4, 600);
 
+                // create table so we can restrict the size of the collapsing header 
+                ImGui.BeginTable("Bone Table", 1);
+                ImGui.TableSetupColumn("BoneColumn", ImGuiTableColumnFlags.WidthFixed, 340);
+                ImGui.TableNextColumn();
+                
                 if (ImGui.CollapsingHeader("Bone Color"))
                 {
-                    ImGui.PushItemWidth(-1f);
+                    ImGui.PushItemWidth(340);
                     ImGui.ColorPicker4("##bonecolor", ref boneColor, ImGuiColorEditFlags.NoSidePreview);
                     ImGui.PopItemWidth();
                 }
+                ImGui.EndTable();
             }
 
             ImGui.Separator();
@@ -380,13 +388,18 @@ public class Renderer : Overlay
             {
                 ImGui.SliderFloat("Joint Radius", ref joinRadius, 1, 8);
 
+                ImGui.BeginTable("Joint Table", 1);
+                ImGui.TableSetupColumn("JointColumn", ImGuiTableColumnFlags.WidthFixed, 340);
+                ImGui.TableNextColumn();
+
                 if (ImGui.CollapsingHeader("Joint Color"))
                 {
-                    ImGui.PushItemWidth(-1f);
+                    ImGui.PushItemWidth(340);
                     ImGui.ColorPicker4("##jointcolor", ref jointColor, ImGuiColorEditFlags.NoSidePreview);
                     ImGui.PopItemWidth();
 
                 }
+                ImGui.EndTable();
             }
 
             ImGui.Separator();
@@ -418,12 +431,18 @@ public class Renderer : Overlay
                     if (drawBorders)
                     {
                         ImGui.SliderFloat("Border Alpha", ref alphaValueBorder, 0.01f, 1f);
+
+                        ImGui.BeginTable("Border Table", 1);
+                        ImGui.TableSetupColumn("BoneColumn", ImGuiTableColumnFlags.WidthFixed, 340);
+                        ImGui.TableNextColumn();
+
                         if (ImGui.CollapsingHeader("Border Color"))
                         {
-                            ImGui.PushItemWidth(-1f);
+                            ImGui.PushItemWidth(340);
                             ImGui.ColorPicker4("##rectcolor", ref borderColor, ImGuiColorEditFlags.NoSidePreview);
                             ImGui.PopItemWidth();
                         }
+                        ImGui.EndTable();
                         ImGui.Separator();
                     }
                 }
@@ -433,22 +452,28 @@ public class Renderer : Overlay
             if (drawRectangles || drawLines)
             {
                 //team
+                ImGui.BeginTable("Rect Table", 1);
+                ImGui.TableSetupColumn("RectColumn", ImGuiTableColumnFlags.WidthFixed, 340);
+                ImGui.TableNextColumn();
                 if (ImGui.CollapsingHeader("Team Color"))
                 {
-                    ImGui.PushItemWidth(-1f);
+                    ImGui.PushItemWidth(340);
                     ImGui.ColorPicker4("##teamcolor", ref teamColor, ImGuiColorEditFlags.NoSidePreview);
                     ImGui.PopItemWidth();
 
                 }
 
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
                 // enemy
                 if (ImGui.CollapsingHeader("Enemy Color"))
                 {
-                    ImGui.PushItemWidth(-1f);
+                    ImGui.PushItemWidth(340);
                     ImGui.ColorPicker4("##enemycolor", ref enemyColor, ImGuiColorEditFlags.NoSidePreview);
                     ImGui.PopItemWidth();
 
                 }
+                ImGui.EndTable();
             }
 
             // if fill rectangle is disabled, show thickness slider
@@ -460,6 +485,10 @@ public class Renderer : Overlay
 
     private void RenderGlow()
     {
+        ImGui.PushStyleColor(ImGuiCol.Header, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header bg
+        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header hovered color
+        ImGui.PushStyleColor(ImGuiCol.HeaderActive, accentColor * new Vector4(0.3f, 0.3f, 0.3f, 1.0f)); // header active color
+
         ImGui.Checkbox("Glow", ref glow);
         if (glow)
         {
@@ -506,6 +535,8 @@ public class Renderer : Overlay
                 }
             }
         }
+
+        ImGui.PopStyleColor(3);
     }
 
     private void RenderFovAimbot()
@@ -686,9 +717,10 @@ public class Renderer : Overlay
         // get height of entity
         float entityHeight = entity.position2d.Y - entity.viewPosition2d.Y;
         float headOffset = entityHeight * 0.12f; // add margin on top because position2d is eyelevel but the box should be drawn arround the head and not the eyes
+        float feetOffset = entityHeight * 0.08f; // similar thing for the feet
 
         // calc dimensions
-        Vector2 rectTop = new Vector2(entity.position2d.X - entityHeight / 4, entity.position2d.Y);
+        Vector2 rectTop = new Vector2(entity.position2d.X - entityHeight / 4, entity.position2d.Y + feetOffset);
         Vector2 rectBottom = new Vector2(entity.position2d.X + entityHeight / 4, entity.viewPosition2d.Y - headOffset);
 
         if (fillColor)
@@ -833,8 +865,25 @@ public class Renderer : Overlay
 
     private void DrawEspPreview(Entity entity)
     {
-        ImGui.Text($"Health: {entity.health}");
-        ImGui.Text("Team: " + entity.team);
+        // text Information
+        ImGui.Text("Name: " + entity.name);
+        string team = entity.team == 3 ? "CT" : "T"; 
+        ImGui.Text($"Health: " + entity.health);
+        ImGui.Text("Team: " + team);
+        ImGui.Text("Weapon: " + entity.currentWeaponName);
+
+        // draw bones
+        Vector2 drawStart = ImGui.GetCursorScreenPos(); // top left corner of next cursor
+
+        float rectWidth = 180;
+        float rectHeight = 300;
+
+        Vector2 topLeft = new Vector2(drawStart.X, drawStart.Y + 5);
+        Vector2 bottomRight = new Vector2(drawStart.X + rectWidth, drawStart.Y + rectHeight + 20);
+
+        ImDrawListPtr drawList = ImGui.GetForegroundDrawList();
+        drawList.AddRect(topLeft, bottomRight, ImGui.ColorConvertFloat4ToU32(espWindowColor), 12f);
+
     }
 
     private bool IsEntityOnScreen(Entity entity)
