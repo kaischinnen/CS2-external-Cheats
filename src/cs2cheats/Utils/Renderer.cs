@@ -75,6 +75,8 @@ public class Renderer : Overlay
     public float rectThickness = 1.0f;
     public float alphaValueRect = 0.1f;
     public float alphaValueBorder = 1.0f;
+    public float cornerRadius2d = 0.0f; // corner radius for 2d rectangle
+    public float cornerRadius3d = 0.0f; // corner radius for 3d rectangle
 
     public Vector2 leftEdgeTop;
     public Vector2 leftEdgeBottom;
@@ -229,8 +231,7 @@ public class Renderer : Overlay
             ImGui.EndTabItem();
         }
 
-
-
+        // draw overlay
         if (esp || fovAimbot)
         {
             DrawOverlay();
@@ -317,8 +318,29 @@ public class Renderer : Overlay
             {
                 ImGui.Text("Press a key");
 
-                // iterate through all the possible ImGui keys
-                foreach (ImGuiKey key in Enum.GetValues(typeof(ImGuiKey)))
+                // list of valid imgui keys
+                ImGuiKey[] allowedKeys = new ImGuiKey[]
+                {
+                    ImGuiKey.Tab, ImGuiKey.LeftArrow, ImGuiKey.RightArrow, ImGuiKey.UpArrow, ImGuiKey.DownArrow,
+                    ImGuiKey.PageUp, ImGuiKey.PageDown, ImGuiKey.Home, ImGuiKey.End, ImGuiKey.Insert, ImGuiKey.Delete,
+                    ImGuiKey.Backspace, ImGuiKey.Space, ImGuiKey.Enter, ImGuiKey.Escape, ImGuiKey.LeftCtrl,
+                    ImGuiKey.LeftShift, ImGuiKey.LeftAlt, ImGuiKey.LeftSuper, ImGuiKey.RightCtrl, ImGuiKey.RightShift,
+                    ImGuiKey.RightAlt, ImGuiKey.RightSuper, ImGuiKey.Menu, ImGuiKey._0, ImGuiKey._1, ImGuiKey._2,
+                    ImGuiKey._3, ImGuiKey._4, ImGuiKey._5, ImGuiKey._6, ImGuiKey._7, ImGuiKey._8, ImGuiKey._9,
+                    ImGuiKey.A, ImGuiKey.B, ImGuiKey.C, ImGuiKey.D, ImGuiKey.E, ImGuiKey.F, ImGuiKey.G, ImGuiKey.H,
+                    ImGuiKey.I, ImGuiKey.J, ImGuiKey.K, ImGuiKey.L, ImGuiKey.M, ImGuiKey.N, ImGuiKey.O, ImGuiKey.P,
+                    ImGuiKey.Q, ImGuiKey.R, ImGuiKey.S, ImGuiKey.T, ImGuiKey.U, ImGuiKey.V, ImGuiKey.W, ImGuiKey.X,
+                    ImGuiKey.Y, ImGuiKey.Z, ImGuiKey.F1, ImGuiKey.F2, ImGuiKey.F3, ImGuiKey.F4, ImGuiKey.F5,
+                    ImGuiKey.F6, ImGuiKey.F7, ImGuiKey.F8, ImGuiKey.F9, ImGuiKey.F10, ImGuiKey.F11, ImGuiKey.F12,
+                    ImGuiKey.CapsLock, ImGuiKey.NumLock, ImGuiKey.ScrollLock, ImGuiKey.Keypad0, ImGuiKey.Keypad1,
+                    ImGuiKey.Keypad2, ImGuiKey.Keypad3, ImGuiKey.Keypad4, ImGuiKey.Keypad5, ImGuiKey.Keypad6,
+                    ImGuiKey.Keypad7, ImGuiKey.Keypad8, ImGuiKey.Keypad9, ImGuiKey.KeypadDecimal,
+                    ImGuiKey.KeypadDivide, ImGuiKey.KeypadMultiply, ImGuiKey.KeypadSubtract, ImGuiKey.KeypadAdd,
+                    ImGuiKey.KeypadEnter, ImGuiKey.MouseLeft, ImGuiKey.MouseRight, ImGuiKey.MouseMiddle,
+                    ImGuiKey.MouseX1, ImGuiKey.MouseX2
+                };
+
+                foreach (ImGuiKey key in allowedKeys)
                 {
                     // check if the key is pressed
                     if (ImGui.IsKeyPressed(key))
@@ -723,6 +745,8 @@ public class Renderer : Overlay
         Vector2 rectTop = new Vector2(entity.position2d.X - entityHeight / 4, entity.position2d.Y + feetOffset);
         Vector2 rectBottom = new Vector2(entity.position2d.X + entityHeight / 4, entity.viewPosition2d.Y - headOffset);
 
+        ImGui.SliderFloat("Corner Radius", ref cornerRadius2d, 0.0f, 20.0f); 
+
         if (fillColor)
         {
             // draw filled rectangle
@@ -737,7 +761,7 @@ public class Renderer : Overlay
         else
         {
             // draw rectangle without fill
-            drawList.AddRect(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(rectColor), rectThickness);
+            drawList.AddRect(rectTop, rectBottom, ImGui.ColorConvertFloat4ToU32(rectColor), cornerRadius2d, ImDrawFlags.None, rectThickness);
         }
     }
 
